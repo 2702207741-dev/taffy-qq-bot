@@ -202,8 +202,6 @@ Bot service (`src/`):
   bypassing the shared item cache and negative cache, and has no daily budget
   unlike vision/embedding/inspect. `query_market_item`, `case_ev` and
   `lookup_inventory` are network tools without a cap.
-- The SteamDT-inspect and embedding daily quotas still read-then-write across
-  separate transactions; only the vision budget was made atomic.
 - Any group member can teach and confirm group slang without an admin check,
   and that text reaches other members' prompts. Mitigations escape the tag and
   instruct the model to ignore embedded directions; instruction-following is
