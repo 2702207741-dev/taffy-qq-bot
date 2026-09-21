@@ -66,6 +66,16 @@ it must be rebuilt after any subsequent source/documentation changes.
   keeps its unfiltered read. This also removes an index-skew fault where the
   numbering a user saw could address a different one of their own rows. Added
   three regression tests in `tests/test_slang_stickers.py`.
+- Made the embedding and SteamDT-inspection daily budgets atomic, matching the
+  earlier vision fix. Both read the counter, compared it to the cap, and then
+  wrote in a *separate* transaction -- and each `database.read`/`database.write`
+  runs in its own transaction on its own connection, so every concurrent caller
+  observed the same count and all of them passed. This is not theoretical:
+  against the pre-fix code, 20 concurrent reservations with a daily budget of 3
+  returned `20 == True` (asserted as `assert 20 == 3`), and 20 reservations for
+  one user with a 2/day per-user cap returned 20. The check and increment now
+  share one transaction, and `tests/test_paid_quota_atomicity.py` pins the hard
+  cap for the global budget, the per-user cap and the zero-budget case.
 - Corrected an operator-facing pointer to a non-existent `SECURITY_REVIEW.md`
   in the admin API warning; it now names `docs/RELEASE_SAFETY.md`, which ships.
 - Fixed the sticker manifest cache serving one library's contents to another.

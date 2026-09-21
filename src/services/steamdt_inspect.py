@@ -17,6 +17,8 @@ from typing import Mapping
 
 import httpx
 
+from src.core.database import Transaction
+
 from .config import bounded_env_int, env_bool
 from .market import st_post
 from .steamdt_wear import WEAR_V1_PATH, WEAR_V2_PATH, detect_wear_request, parse_wear_response
@@ -52,15 +54,22 @@ def _today_key() -> str:
 
 
 async def consume_inspect_quota(user_id: int | str) -> bool:
-    """Reserve one global + one per-user unit for today; ``False`` when out."""
+    """Reserve one global + one per-user unit for today; ``False`` when out.
+
+    Both counters are checked and incremented inside a single transaction.  As
+    separate ``read``/``write`` calls each statement ran on its own connection,
+    so concurrent inspections all compared the same count and all passed,
+    overspending a paid upstream quota and breaking the per-user cap too.
+    """
 
     from src.state.runtime import database
 
     day = _today_key()
     global_key = f"inspect:{day}"
     user_key = f"inspect:user:{user_id}:{day}"
-    try:
-        rows = await database.read(
+
+    def reserve(transaction: Transaction) -> bool:
+        rows = transaction.read(
             "SELECT key, value FROM app_meta WHERE key IN (?, ?)", (global_key, user_key)
         )
         used = {str(row["key"]): int(row["value"]) for row in rows}
@@ -69,7 +78,7 @@ async def consume_inspect_quota(user_id: int | str) -> bool:
         if used.get(user_key, 0) >= _PER_USER_DAILY_CAP:
             return False
         for key in (global_key, user_key):
-            await database.write(
+            transaction.write(
                 """
                 INSERT INTO app_meta (key, value) VALUES (?, ?)
                 ON CONFLICT(key) DO UPDATE SET value = value + 1, updated_at =
@@ -78,6 +87,9 @@ async def consume_inspect_quota(user_id: int | str) -> bool:
                 (key, str(used.get(key, 0) + 1)),
             )
         return True
+
+    try:
+        return await database.transaction(reserve)
     except Exception as exc:
         logger.warning("Inspect quota check failed error=%s", type(exc).__name__)
         return False
