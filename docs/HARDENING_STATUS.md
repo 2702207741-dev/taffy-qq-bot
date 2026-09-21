@@ -1,6 +1,6 @@
 # Security hardening status (2026-09-21)
 
-Status: work in progress, not a certification and not a new final release.
+Status: hardened beta source candidate; not a security certification.
 The old v0.6.0 ZIP and old Git metadata were moved to a private backup outside
 the release directory. A replacement review ZIP was built from the new baseline;
 it must be rebuilt after any subsequent source/documentation changes.
@@ -14,9 +14,9 @@ it must be rebuilt after any subsequent source/documentation changes.
 - Removed the unused JavaScript bridge method that returned the saved token.
   The UI uses the authenticated Python proxy instead. This reduces token exposure;
   it does not make a compromised frontend harmless, since the proxy is privileged.
-- Desktop regression suite passed after the first changes. Additional regression
-  cases are being added; final packaging and full validation remain pending.
-- The latest full main isolated suite completed: 1,991 passed, 1 skipped, 75 subtests passed.
+- Desktop regression suite, lint and type checking passed after the credential
+  and artwork changes. Main lint, formatting, lock checks and type checking passed.
+- The latest full main isolated suite completed: 1,998 passed, 1 skipped, 75 subtests passed.
   Windows could not exercise symlink creation/escape cases and Linux directory
   descriptor protections; these are explicitly unverified on this host.
 - Fixed stale credential reuse when keyring rotation fails: the newly saved
@@ -40,17 +40,21 @@ it must be rebuilt after any subsequent source/documentation changes.
   reservations with a budget of 3 and confirms exactly 3 succeed; zero-budget
   behavior is also covered. The related 21-test suite passed after this change.
 
-## Remaining review and verification
+## Release checks and remaining external verification
 
-- Review desktop navigation, bridge capabilities and credential scoping when
-  changing destinations; test authentication failure paths.
-- Review server authorization, outbound URL handling, file access, and untrusted
-  model output across the bot and admin interfaces.
-- Repeat history/working-tree/archive secret scans and dependency audits.
-- Run final bot and desktop suites against the final source, including documented
-  platform limitations rather than claiming untested platforms passed.
-- Verify third-party redistribution notices, onboarding steps, multilingual docs,
-  and release automation; build a new artifact with an integrity manifest.
+- History/working-tree secret scans passed. Main and desktop dependency audits
+  found no known advisories in the locked packages at the time checked. These
+  results do not cover unknown vulnerabilities or establish safety of every dependency.
+- Source-archive identity and credential scanning are now part of CI. Run them
+  again on each newly built artifact; hashes identify a file, not its security.
+- Desktop bridge navigation, external model responses, server permission flows
+  and deployment-level controls still warrant an independent adversarial review.
+  Existing regression tests are not evidence of exhaustive coverage.
+- The full Linux/Python compatibility matrix, a real QQ/OneBot/model deployment,
+  interactive WebView2 operation and executable packaging have not been verified
+  in this local run. GitHub CI must pass on the exact published commit.
+- English README and a Chinese getting-started guide are provided; this is not a
+  claim that the entire application UI is multilingual.
 - Check application statements against public evidence. Publication, adoption,
   maintainer identity/authority, and ongoing activity cannot be manufactured by
   code changes. No approval probability is known.

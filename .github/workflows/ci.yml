@@ -43,6 +43,11 @@ jobs:
         run: uv run --frozen mypy
       - name: Test
         run: uv run --frozen python scripts/run_isolated_tests.py -- --cov=src --cov-report=term-missing
+      - name: Verify distributable source archive
+        run: |
+          mkdir -p dist
+          git archive --format=zip --output=dist/source.zip HEAD
+          uv run --frozen python scripts/verify_release_zip.py dist/source.zip
 
   compatibility:
     name: Python ${{ matrix.python-version }} / ${{ matrix.os }}

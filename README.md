@@ -23,6 +23,8 @@ Read [the architecture guide](docs/ARCHITECTURE.md), [privacy guide](docs/PRIVAC
 
 ## Quick start
 
+中文完整流程：[从下载到使用](docs/QUICKSTART.zh-CN.md)。Release verification limits: [hardening status](docs/HARDENING_STATUS.md).
+
 ### Prerequisites
 
 - Python 3.12, 3.13, or 3.14
