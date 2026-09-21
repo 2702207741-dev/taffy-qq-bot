@@ -89,16 +89,21 @@ None of them used the private upstream project.
 | Python | Platform | Isolated suite | Exit |
 | --- | --- | --- | --- |
 | 3.12 | Windows | 2,013 passed, 1 skipped, 75 subtests passed | 0 |
-| 3.12.3 | Linux (WSL Ubuntu) | see note below | 0 / 1 |
-| 3.13.13 | Linux (WSL Ubuntu) | 2,013 passed, 75 subtests passed | 0 |
-| 3.14.6 | Linux (WSL Ubuntu) | 2,013 passed, 75 subtests passed | 0 |
+| 3.12.3 | Linux (WSL Ubuntu) | 2,014 passed, 75 subtests passed | 0 |
+| 3.13.13 | Linux (WSL Ubuntu) | 2,014 passed, 75 subtests passed | 0 |
+| 3.14.6 | Linux (WSL Ubuntu) | 2,014 passed, 75 subtests passed | 0 |
 
-The Windows row and the two passing Linux rows were measured on the archive
-containing every fix listed above. Linux/3.12 is marked "0 / 1" deliberately:
-its run reported one failure, the sticker-cache fault described above, which was
-a real defect and is now fixed -- the earlier green Linux/3.12 result was
-luck, not evidence. Re-run the whole table on the exact published commit before
-relying on it.
+All four runs used `scripts/run_isolated_tests.py`, which copies the tree into a
+throwaway directory instead of testing in place; the three Linux runs unpacked
+the release archive itself rather than a working checkout. The Linux
+interpreter also cleared Ruff (`All checks passed!`), `ruff format --check`
+(305 files) and mypy (150 source files).
+
+One caveat that must not be smoothed over: the first Linux run of this matrix
+**failed** on 3.12 while 3.13 and 3.14 passed the same archive. That was not a
+platform quirk -- it was the sticker-cache timing fault described above, and the
+earlier "Linux 3.12 passed" result had been luck. A green interpreter is not
+evidence that a timing-dependent defect is absent.
 
 `requires-python = ">=3.12,<3.15"` is therefore demonstrated on Linux for all
 three interpreters. **Python 3.13 and 3.14 remain unverified on Windows**, and
