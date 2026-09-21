@@ -13,7 +13,7 @@ TaffyDesktopStudio.exe（pywebview + WebView2）
 │     场景切换 · Ctrl+K 命令面板 · 通知规则 · 键盘流 · 主题布局记忆
 ├── 桌面壳 taffy_desktop/
 │     supervisor 进程看护 │ tray 托盘 │ EventPoller+notify 通知中心 │ DPAPI 凭据
-└── 全部 HTTP → 127.0.0.1:8080 → bot 侧 src/plugins/desktop_api.py（薄门面）
+└── 本机/SSH 回环 HTTP 或远程 HTTPS → bot 侧 src/plugins/desktop_api.py（薄门面）
 ```
 
 三条铁律：**A1 薄门面**（desktop_api 只做 参数校验→调现有 service→JSON 化）、
@@ -26,8 +26,8 @@ TaffyDesktopStudio.exe（pywebview + WebView2）
 
 ```powershell
 cd desktop
-uv sync                                   # 安装壳依赖
-powershell -ExecutionPolicy Bypass -File scripts/vendor.ps1   # 下载 Vue/ECharts 并打印 sha256
+uv sync --frozen                           # 按锁文件安装壳依赖
+# Vue/ECharts 已包含在源码包内，正常安装无需再次下载。
 ```
 
 bot 侧一次性配置（本地 `.env`，运行时配置不提交）：
@@ -44,13 +44,13 @@ ADMIN_API_TOKEN=<secrets.token_urlsafe(32)>   # 桌面端与 admin API 共用
 
 ```powershell
 cd desktop
-uv run python -m taffy_desktop.app            # 正常启动；关窗行为由设置决定（见下）
-uv run python -m taffy_desktop.app --minimized
-uv run python -m taffy_desktop.app --self-test # 七步自检后退出
+uv run --frozen python -m taffy_desktop.app            # 正常启动
+uv run --frozen python -m taffy_desktop.app --minimized
+uv run --frozen python -m taffy_desktop.app --self-test # 七步自检后退出
 ```
 
 首次启动：输入 `ADMIN_API_TOKEN` → 校验通过后存入 Windows 凭据库（DPAPI）。
-之后令牌只留在 Python 侧，绝不进页面 DOM / localStorage。
+保存后的令牌只由 Python 侧读取和使用，不回传页面或写入 localStorage；首次手动输入仍会经过密码输入框。令牌按目标地址隔离保存，旧版本用户需要重新验证。远程连接必须 HTTPS；HTTP 仅接受回环 IP。SSH 默认关闭，详见 [发布安全说明](../docs/RELEASE_SAFETY.md)。
 
 ## 系统托盘
 

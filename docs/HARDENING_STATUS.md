@@ -1,8 +1,9 @@
 # Security hardening status (2026-09-21)
 
 Status: work in progress, not a certification and not a new final release.
-The existing v0.6.0 ZIP predates the changes described below and must not be
-represented as including them until a new artifact has been built and checked.
+The old v0.6.0 ZIP and old Git metadata were moved to a private backup outside
+the release directory. A replacement review ZIP was built from the new baseline;
+it must be rebuilt after any subsequent source/documentation changes.
 
 ## Verified changes in this pass
 
@@ -15,7 +16,7 @@ represented as including them until a new artifact has been built and checked.
   it does not make a compromised frontend harmless, since the proxy is privileged.
 - Desktop regression suite passed after the first changes. Additional regression
   cases are being added; final packaging and full validation remain pending.
-- The main isolated suite completed: 1,973 passed, 1 skipped, 75 subtests passed.
+- The latest full main isolated suite completed: 1,991 passed, 1 skipped, 75 subtests passed.
   Windows could not exercise symlink creation/escape cases and Linux directory
   descriptor protections; these are explicitly unverified on this host.
 - Fixed stale credential reuse when keyring rotation fails: the newly saved
@@ -27,6 +28,17 @@ represented as including them until a new artifact has been built and checked.
   Regression tests switch settings during proxy loading and token verification
   and verify that the token stays with the original destination. In-memory
   fallback keeps account and token in one immutable pair, avoiding torn pairing.
+- Added archive validation for committed-file identity, prohibited paths, missing
+  and duplicate members, symlinks, Windows path aliases and credential patterns.
+  The subsequent targeted archive/secret suite passed 36 tests after adding
+  GitHub, AWS and Slack credential patterns.
+- Replaced uncertain-provenance artwork with a newly drawn geometric SVG and
+  rebuilt public history without the old artwork. Added complete upstream Vue,
+  ECharts and D3 license/NOTICE files.
+- Fixed the vision API daily-budget race: read/check/reserve now runs in one
+  immediate SQLite transaction. A regression test launches 20 concurrent
+  reservations with a budget of 3 and confirms exactly 3 succeed; zero-budget
+  behavior is also covered. The related 21-test suite passed after this change.
 
 ## Remaining review and verification
 

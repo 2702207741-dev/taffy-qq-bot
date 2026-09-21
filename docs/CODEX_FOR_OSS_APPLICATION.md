@@ -16,7 +16,9 @@ Choose **Primary maintainer** only if you actually own or lead releases, issue t
 
 Use only verified current metrics. Replace every bracket before submitting:
 
-> Taffy is a self-hosted, open-source CS2 assistant for Chinese QQ communities, built on NoneBot2 and OneBot V11. It emphasises local state, explicit privacy boundaries, reproducible locks, secret-history scanning, CI, and deterministic tests. Current public evidence: [stars] stars, [forks] forks, [release downloads or installs], [active users/groups if you can substantiate them], and [recent PR/issue/release activity]. I am the [accurate role] responsible for [specific maintenance duties].
+> Taffy is a self-hosted CS2 assistant for QQ communities, built on NoneBot2/OneBot V11. It provides local state, scoped memory, market queries and an admin console. I maintain [actual duties]. Public evidence: [repository URL], [releases/PRs/issues], [verified adoption]. Codex would support regression tests, security review and maintenance automation. This is a newly published project; I do not claim established adoption without evidence.
+
+The template is not submission-ready: replace brackets with accurate facts and recount the final answer to keep it within 500 characters. Never leave placeholder metrics in the submitted form.
 
 Do not substitute aspirations, local development activity, or unverified user counts for public evidence. A new repository can still be submitted, but its selection odds are inherently harder to demonstrate than those of an established, actively used project.
 

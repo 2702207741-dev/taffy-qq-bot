@@ -23,6 +23,8 @@ import mimetypes
 from pathlib import Path
 from typing import Any
 
+from src.core.database import Transaction
+
 from .config import (
     PROJECT_ROOT,
     bounded_base_url,
@@ -79,12 +81,13 @@ async def _consume_daily_budget() -> bool:
     from src.state.runtime import database
 
     key = f"vision:{_today_key()}"
-    try:
-        rows = await database.read("SELECT value FROM app_meta WHERE key = ?", (key,))
+
+    def reserve(transaction: Transaction) -> bool:
+        rows = transaction.read("SELECT value FROM app_meta WHERE key = ?", (key,))
         used = int(rows[0]["value"]) if rows else 0
-        if used >= _DAILY_BUDGET:
+        if used < 0 or used >= _DAILY_BUDGET:
             return False
-        await database.write(
+        transaction.write(
             """
             INSERT INTO app_meta (key, value) VALUES (?, ?)
             ON CONFLICT(key) DO UPDATE SET value = value + 1, updated_at =
@@ -93,6 +96,9 @@ async def _consume_daily_budget() -> bool:
             (key, str(used + 1)),
         )
         return True
+
+    try:
+        return await database.transaction(reserve)
     except Exception as exc:
         logger.warning("Vision budget check failed error=%s", type(exc).__name__)
         return False
