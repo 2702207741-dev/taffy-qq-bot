@@ -193,6 +193,18 @@ Following only the documented path (`copy .env.example .env`, then run
   this probe and requires an operator-supplied endpoint.
 - With every key blank no paid provider request was possible.
 
+Re-running that probe after the Host guard was added (`dab559c`, Windows, scratch
+state and log directories outside the project, nothing published): the bot still
+starts and answers on `127.0.0.1` within seconds, and `GET /admin-panel` with a
+loopback `Host` returns 200, so the guard does not break the documented path.
+Against the live server, `POST /onebot/v11/http` with a loopback `Host` still
+reaches the adapter and comes back `400 Missing X-Self-ID Header`, while the same
+request sent with `Host: evil.example.com:8123` returns `400 Invalid Host header`
+without ever reaching it -- the guard runs before routing. One observation is
+deliberately not claimed as a result: my probe's guessed `GET /health` path
+returned 404, so it was not verified at that URL (it did show the same 400-vs-404
+difference between hosts, which is what the guard is about).
+
 ## Release checks and remaining external verification
 
 - History/working-tree secret scans passed. Main and desktop dependency audits
