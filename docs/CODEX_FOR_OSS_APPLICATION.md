@@ -1,6 +1,6 @@
 # Codex for Open Source application worksheet
 
-This worksheet is deliberately factual. It is a preparation aid, not evidence that OpenAI will select the project. OpenAI says it considers repository usage, ecosystem importance, active maintenance, maintainer role/permissions, and program capacity; selection is discretionary. See the official [program page](https://developers.openai.com/community/codex-for-oss) and [terms](https://learn.chatgpt.com/docs/codex-for-oss-terms).
+This worksheet is deliberately factual. It is a preparation aid, not evidence that OpenAI will select the project. The official documentation checked on 2026-09-21 says applicants should be a "core maintainer" or "run a widely used public project", that the award is capped at "six months of ChatGPT Pro with Codex", that extended Codex Security access requires write access and is evaluated "case by case", and that a repository without mainstream visibility is asked to "explain why" it matters to the broader ecosystem. No star, contributor or usage threshold is published, and submitting is not a claim of eligibility. See the official [program page](https://developers.openai.com/community/codex-for-oss) and [terms](https://learn.chatgpt.com/docs/codex-for-oss-terms). The `openai.com/.../form/codex-for-oss/` page returns HTTP 403 to automated retrieval, so confirm the live form fields by opening it in a browser before submitting.
 
 ## Publish first
 

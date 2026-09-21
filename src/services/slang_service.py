@@ -58,18 +58,24 @@ def automine_enabled() -> bool:
     return str(raw).strip().casefold() in {"1", "true", "yes", "on"}
 
 
-async def prompt_terms(scope_group_id: int, *, limit: int = 20) -> tuple[str, ...]:
+async def prompt_terms(
+    scope_group_id: int, *, limit: int = 20, created_by: int | None = None
+) -> tuple[str, ...]:
     """Accepted terms formatted for the persona prompt, or empty when off.
 
     ``limit`` comes from the intimacy-band allowance: closer scopes may
-    draw from more taught expressions.
+    draw from more taught expressions.  ``created_by`` restricts a private
+    (``scope_group_id == 0``) read to one user; without it every user's
+    privately taught terms would be injected into this user's prompt.
     """
 
     if not learning_enabled():
         return ()
     from src.state.runtime import persona_slang
 
-    entries = await persona_slang.accepted_for_injection(scope_group_id, limit=limit)
+    entries = await persona_slang.accepted_for_injection(
+        scope_group_id, limit=limit, created_by=created_by
+    )
     return tuple(f"{entry.term}（{entry.meaning}）" for entry in entries)
 
 

@@ -82,13 +82,21 @@ def bounded_env_float(name: str, default: float, minimum: float, maximum: float)
 
 
 def bounded_env_text(name: str, default: str, *, maximum: int = 256) -> str:
-    """Read short single-line configuration, falling back when malformed."""
+    """Read short single-line configuration, falling back when malformed.
+
+    An empty value means "unconfigured" and silently selects ``default``, the
+    same convention ``env_secret`` uses.  Only a value that is present but
+    unusable is reported, so the shipped ``.env.example`` blanks do not emit a
+    warning on every clean install.
+    """
 
     raw = runtime_setting(name)
     if raw is None:
         return default
     value = raw.strip()
-    if not value or len(value) > maximum or any(ord(char) < 32 for char in value):
+    if not value:
+        return default
+    if len(value) > maximum or any(ord(char) < 32 for char in value):
         logger.warning("Ignoring invalid text setting %s", name)
         return default
     return value

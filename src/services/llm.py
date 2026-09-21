@@ -1567,7 +1567,16 @@ class ChatService:
             # Intimacy pays out in behaviour: closer scopes may draw from a
             # larger pool of taught expressions.
             slang_limit = relationship_benefits(familiarity)["slang_limit"]
-            slang_terms = await prompt_terms(persona_scope.group_id, limit=slang_limit) or None
+            # Private scope (0) collapses every user into one bucket, so an
+            # unfiltered read would speak one user's privately taught terms in
+            # another user's conversation.
+            slang_speaker = persona_scope.owner_user_id if persona_scope.group_id == 0 else None
+            slang_terms = (
+                await prompt_terms(
+                    persona_scope.group_id, limit=slang_limit, created_by=slang_speaker
+                )
+                or None
+            )
         prompt = system_prompt(
             message,
             context,

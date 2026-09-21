@@ -55,6 +55,18 @@ async def _finish(matcher: type, event: MessageEvent, text: str) -> NoReturn:
     raise RuntimeError("matcher.finish returned unexpectedly")
 
 
+def _listing_owner(group_id: int, owner_user_id: int) -> int | None:
+    """Owner predicate for a listing whose indexes drive later mutations.
+
+    Private chat collapses every user into ``group_id == 0``, so an unfiltered
+    listing both exposes other users' terms and shifts the numbering that
+    ``确认/删除/启用话术 N`` resolves against.  A group's vocabulary is shared
+    by design, so group listings stay unfiltered.
+    """
+
+    return owner_user_id if group_id == 0 else None
+
+
 @slang_cmd.handle()
 async def handle_slang(bot: Bot, event: MessageEvent) -> None:
     if not await check_feature(slang_cmd, event, "chat"):
@@ -70,7 +82,15 @@ async def handle_slang(bot: Bot, event: MessageEvent) -> None:
     text = event.get_plaintext().strip()
     try:
         if text == "话术列表":
-            await _finish(slang_cmd, event, await _list_reply(scope.group_id, scope.label))
+            await _finish(
+                slang_cmd,
+                event,
+                await _list_reply(
+                    scope.group_id,
+                    scope.label,
+                    created_by=_listing_owner(scope.group_id, scope.owner_user_id),
+                ),
+            )
             return
 
         if text.startswith("塔菲学话 "):
@@ -107,7 +127,9 @@ async def handle_slang(bot: Bot, event: MessageEvent) -> None:
             if not raw.isdecimal():
                 await _finish(slang_cmd, event, "要给我一个序号，先发“话术列表”看看喵。")
                 return
-            pending = await persona_slang.pending(scope.group_id)
+            pending = await persona_slang.pending(
+                scope.group_id, created_by=_listing_owner(scope.group_id, scope.owner_user_id)
+            )
             index = int(raw)
             if index < 1 or index > len(pending):
                 await _finish(slang_cmd, event, "列表里没有这个序号，发“话术列表”再确认一下吧。")
@@ -129,7 +151,11 @@ async def handle_slang(bot: Bot, event: MessageEvent) -> None:
             # 必须与「话术列表」打印的那一份同源（accepted_all，含已停用）。
             # 用 accepted_for_injection（仅启用）会让序号在有停用条目时整体错位，
             # 删掉的本是列表上另一行的词条。
-            listing = await persona_slang.accepted_all(scope.group_id, limit=50)
+            listing = await persona_slang.accepted_all(
+                scope.group_id,
+                limit=50,
+                created_by=_listing_owner(scope.group_id, scope.owner_user_id),
+            )
             if not raw.isdecimal() or int(raw) < 1 or int(raw) > len(listing):
                 await _finish(slang_cmd, event, "序号无效；删除按“话术列表”里已确认条目的顺序。")
                 return
@@ -146,7 +172,11 @@ async def handle_slang(bot: Bot, event: MessageEvent) -> None:
 
         if text.startswith("启用话术 "):
             raw = text[len("启用话术 ") :].strip()
-            all_accepted = await persona_slang.accepted_all(scope.group_id, limit=50)
+            all_accepted = await persona_slang.accepted_all(
+                scope.group_id,
+                limit=50,
+                created_by=_listing_owner(scope.group_id, scope.owner_user_id),
+            )
             if not raw.isdecimal() or int(raw) < 1 or int(raw) > len(all_accepted):
                 await _finish(
                     slang_cmd, event, "序号无效；启用/停用按“话术列表”里已确认条目的顺序。"
@@ -171,13 +201,13 @@ async def handle_slang(bot: Bot, event: MessageEvent) -> None:
         await _finish(slang_cmd, event, "话术这次没处理好，晚点再试喵。")
 
 
-async def _list_reply(group_id: int, label: str) -> str:
+async def _list_reply(group_id: int, label: str, *, created_by: int | None) -> str:
     from src.state.runtime import persona_slang
 
-    pending = await persona_slang.pending(group_id)
-    accepted = await persona_slang.accepted_all(group_id, limit=50)
+    pending = await persona_slang.pending(group_id, created_by=created_by)
+    accepted = await persona_slang.accepted_all(group_id, limit=50, created_by=created_by)
     if not pending and not accepted:
-        terms = await prompt_terms(group_id)
+        terms = await prompt_terms(group_id, created_by=created_by)
         if not terms:
             return (
                 "这里还没有教过塔菲任何说法。格式：塔菲学话 词 :: 含义或用法，"

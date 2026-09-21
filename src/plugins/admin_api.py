@@ -105,7 +105,7 @@ _auth_failure_limiter = SlidingWindowLimiter(_AUTH_FAILURE_LIMIT, _AUTH_FAILURE_
 _log.warning(
     "Admin API auth-failure throttling counts per TCP peer in-process; run a "
     "single worker and keep the panel off shared reverse proxies (see "
-    "SECURITY_REVIEW.md)"
+    "docs/RELEASE_SAFETY.md)"
 )
 _health_cache_lock = asyncio.Lock()
 _health_cache_expires_at = 0.0

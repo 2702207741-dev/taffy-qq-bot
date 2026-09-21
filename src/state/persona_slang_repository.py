@@ -94,6 +94,22 @@ def _scope_clause(scope_group_id: int, created_by: int | None) -> tuple[str, tup
     return " AND scope_group_id = ?", (scope_group_id,)
 
 
+def _owner_clause(created_by: int | None) -> tuple[str, tuple[object, ...]]:
+    """Optional owner predicate for scope listings.
+
+    Mutations already refuse to run on private scope without ``created_by``
+    (see ``_scope_clause``).  Listings need the same knob because
+    ``scope_group_id == 0`` collapses every user's private rows into one
+    bucket: omitting the filter hands one user another user's taught terms and
+    author QQ id.  ``None`` means "every user" and is reserved for the
+    operator console, so a forgotten filter cannot quietly become the default.
+    """
+
+    if created_by is None:
+        return "", ()
+    return " AND created_by = ?", (int(created_by),)
+
+
 class PersonaSlangRepository(Repository):
     """Pending/accepted expression dictionary for one scope."""
 
@@ -141,14 +157,17 @@ class PersonaSlangRepository(Repository):
 
         return await self.database.transaction(persist)
 
-    async def pending(self, scope_group_id: int) -> list[PersonaSlang]:
+    async def pending(
+        self, scope_group_id: int, *, created_by: int | None = None
+    ) -> list[PersonaSlang]:
+        clause, owner_params = _owner_clause(created_by)
         rows = await self.database.read(
-            """
+            f"""
             SELECT * FROM persona_slang
-            WHERE scope_group_id = ? AND status = 'pending'
+            WHERE scope_group_id = ? AND status = 'pending'{clause}
             ORDER BY id DESC
             """,
-            (scope_group_id,),
+            (scope_group_id, *owner_params),
         )
         return [_row(row) for row in rows]
 
@@ -209,32 +228,45 @@ class PersonaSlangRepository(Repository):
         return await self.database.transaction(persist)
 
     async def accepted_for_injection(
-        self, scope_group_id: int, *, limit: int = 20
+        self,
+        scope_group_id: int,
+        *,
+        limit: int = 20,
+        created_by: int | None = None,
     ) -> list[PersonaSlang]:
-        """Accepted, still-enabled terms ranked by confidence then recency."""
+        """Accepted, still-enabled terms ranked by confidence then recency.
 
+        Pass ``created_by`` for a person-scoped read; private scope is shared
+        across users, so leaving it out here injects other people's private
+        terms into this user's prompt.
+        """
+
+        clause, owner_params = _owner_clause(created_by)
         rows = await self.database.read(
-            """
+            f"""
             SELECT * FROM persona_slang
-            WHERE scope_group_id = ? AND status = 'accepted' AND enabled = 1
+            WHERE scope_group_id = ? AND status = 'accepted' AND enabled = 1{clause}
             ORDER BY confidence DESC, accepted_at DESC
             LIMIT ?
             """,
-            (scope_group_id, max(1, min(int(limit), 50))),
+            (scope_group_id, *owner_params, max(1, min(int(limit), 50))),
         )
         return [_row(row) for row in rows]
 
-    async def accepted_all(self, scope_group_id: int, *, limit: int = 50) -> list[PersonaSlang]:
+    async def accepted_all(
+        self, scope_group_id: int, *, limit: int = 50, created_by: int | None = None
+    ) -> list[PersonaSlang]:
         """All accepted terms including disabled ones (management listing)."""
 
+        clause, owner_params = _owner_clause(created_by)
         rows = await self.database.read(
-            """
+            f"""
             SELECT * FROM persona_slang
-            WHERE scope_group_id = ? AND status = 'accepted'
+            WHERE scope_group_id = ? AND status = 'accepted'{clause}
             ORDER BY confidence DESC, accepted_at DESC
             LIMIT ?
             """,
-            (scope_group_id, max(1, min(int(limit), 50))),
+            (scope_group_id, *owner_params, max(1, min(int(limit), 50))),
         )
         return [_row(row) for row in rows]
 

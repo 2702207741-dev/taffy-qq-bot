@@ -154,6 +154,75 @@ async def test_automine_proposes_pending_terms_without_context(
 
 
 # ---------------------------------------------------------------------------
+# Private-scope ownership on the read side
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_private_listings_can_be_filtered_to_one_speaker(
+    tmp_path: Path,
+) -> None:
+    """``group_id == 0`` is shared across users, so listings must be filterable.
+
+    The QQ commands resolve ``确认/删除/启用话术 N`` by index into these very
+    listings, so an unfiltered read leaks another user's terms and shifts the
+    numbering that then drives an ownership-fenced mutation.
+    """
+
+    repo = await _repo(tmp_path)
+    await repo.teach(0, created_by=1001, term="我的词", meaning="甲")
+    await repo.teach(0, created_by=1002, term="别人的词", meaning="乙")
+
+    mine = await repo.pending(0, created_by=1001)
+    assert {item.term for item in mine} == {"我的词"}
+    assert all(item.created_by == 1001 for item in mine)
+
+    theirs = await repo.pending(0, created_by=1002)
+    assert {item.term for item in theirs} == {"别人的词"}
+
+    # The operator console intentionally reads the whole bucket.
+    assert {item.term for item in await repo.pending(0)} == {"我的词", "别人的词"}
+
+
+@pytest.mark.asyncio
+async def test_accepted_read_side_respects_speaker_and_group_scope(
+    tmp_path: Path,
+) -> None:
+    repo = await _repo(tmp_path)
+    for speaker, term in ((1001, "甲语"), (1002, "乙语")):
+        entry, _ = await repo.teach(0, created_by=speaker, term=term, meaning="义")
+        await repo.decide(entry.id, scope_group_id=0, created_by=speaker, status="accepted")
+
+    assert {i.term for i in await repo.accepted_all(0, created_by=1001)} == {"甲语"}
+    assert {i.term for i in await repo.accepted_for_injection(0, created_by=1002)} == {"乙语"}
+
+    group_a, _ = await repo.teach(2001, created_by=1001, term="群词", meaning="义")
+    await repo.decide(group_a.id, scope_group_id=2001, status="accepted")
+    # A group's vocabulary belongs to the group: a member sees every row.
+    assert {i.term for i in await repo.accepted_for_injection(2001)} == {"群词"}
+
+
+@pytest.mark.asyncio
+async def test_prompt_terms_threads_the_speaker_into_private_scope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = await _repo(tmp_path)
+    for speaker, term in ((1001, "甲语"), (1002, "乙语")):
+        entry, _ = await repo.teach(0, created_by=speaker, term=term, meaning="义")
+        await repo.decide(entry.id, scope_group_id=0, created_by=speaker, status="accepted")
+
+    import src.state.runtime as runtime_module
+
+    monkeypatch.setattr(slang_service, "learning_enabled", lambda: True)
+    with _patch(runtime_module, "persona_slang", repo):
+        alone = await prompt_terms(0, created_by=1001)
+        everyone = await prompt_terms(0)
+
+    assert alone == ("甲语（义）",)
+    assert set(everyone) == {"甲语（义）", "乙语（义）"}
+
+
+# ---------------------------------------------------------------------------
 # Stickers phase one
 # ---------------------------------------------------------------------------
 
