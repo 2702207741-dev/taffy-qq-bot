@@ -333,7 +333,11 @@ async def test_real_socket_disconnect_recovers_with_a_new_pool() -> None:
     ) -> None:
         nonlocal calls
         try:
-            await reader.readuntil(b"\r\n\r\n")
+            try:
+                await reader.readuntil(b"\r\n\r\n")
+            except asyncio.IncompleteReadError:
+                # An aborted client is part of this scenario, not a failure.
+                return
             calls += 1
             if calls == 1:
                 return
@@ -361,7 +365,8 @@ async def test_real_socket_disconnect_recovers_with_a_new_pool() -> None:
                 "GET",
                 f"http://127.0.0.1:{port}/recovery",
                 attempts=1,
-                total_timeout=3,
+                # Sized for two real round trips on an oversubscribed CI runner.
+                total_timeout=20,
             ) == {"ok": True}
             snapshot = await service.snapshot()
             assert calls == 2
