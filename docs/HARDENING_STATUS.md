@@ -16,7 +16,8 @@ it must be rebuilt after any subsequent source/documentation changes.
   it does not make a compromised frontend harmless, since the proxy is privileged.
 - Desktop regression suite, lint and type checking passed after the credential
   and artwork changes. Main lint, formatting, lock checks and type checking passed.
-- The latest full main isolated suite completed: 1,998 passed, 1 skipped, 75 subtests passed.
+- The full main isolated suite is green on every interpreter listed in
+  "Verified platform matrix" below; that section holds the authoritative counts.
   Windows could not exercise symlink creation/escape cases and Linux directory
   descriptor protections; these are explicitly unverified on this host.
 - Fixed stale credential reuse when keyring rotation fails: the newly saved
@@ -98,16 +99,29 @@ None of them used the private upstream project.
 
 | Python | Platform | Isolated suite | Exit |
 | --- | --- | --- | --- |
-| 3.12 | Windows | 2,013 passed, 1 skipped, 75 subtests passed | 0 |
-| 3.12.3 | Linux (WSL Ubuntu) | 2,014 passed, 75 subtests passed | 0 |
-| 3.13.13 | Linux (WSL Ubuntu) | 2,014 passed, 75 subtests passed | 0 |
-| 3.14.6 | Linux (WSL Ubuntu) | 2,014 passed, 75 subtests passed | 0 |
+| 3.12 | Windows | 2,017 passed, 1 skipped, 75 subtests passed | 0 |
+| 3.12.3 | Linux (WSL Ubuntu) | 2,018 passed, 75 subtests passed | 0 |
+| 3.13.13 | Linux (WSL Ubuntu) | 2,018 passed, 75 subtests passed | 0 |
+| 3.14.6 | Linux (WSL Ubuntu) | 2,018 passed, 75 subtests passed | 0 |
+
+Both platforms collect 2,018 items: the Windows run records one of them as
+skipped, each Linux run collects and passes all 2,018. The three Linux rows used
+the archive `e3af3dae781406bec6dbfe686ab3e4634220904b1f62c0194ac366f70abdf516`
+(commit `2038c66`), and every count above was read from that run's isolated
+`pytest.log` rather than inferred. This page was then rebuilt into the shipped
+archive with documentation-only changes, so the shipped hash differs while the
+tested source under `src/`, `scripts/`, `tests/` and `bot.py` does not.
 
 All four runs used `scripts/run_isolated_tests.py`, which copies the tree into a
 throwaway directory instead of testing in place; the three Linux runs unpacked
-the release archive itself rather than a working checkout. The Linux
+the release archive itself rather than a working checkout. The Linux 3.12
 interpreter also cleared Ruff (`All checks passed!`), `ruff format --check`
-(305 files) and mypy (150 source files).
+(306 files) and mypy (150 source files). `scripts/check_secrets.py` returned
+exit 2 there with `Secret scan could not complete: git ls-files failed`, because
+an extracted archive has no Git metadata: the scanner refuses to report a pass on
+an incomplete file set, so that gate is only satisfied in a real checkout (Windows,
+exit 0) and in CI. The 3.13 and 3.14 runs emitted warnings the 3.12 run did not,
+without any test failing; they are recorded in the isolated logs, not summarised here.
 
 One caveat that must not be smoothed over: the first Linux run of this matrix
 **failed** on 3.12 while 3.13 and 3.14 passed the same archive. That was not a
