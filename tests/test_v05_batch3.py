@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -581,6 +582,124 @@ async def test_download_inbound_image_falls_through_without_bot() -> None:
     assert saved is None
     saved = await vision_module.download_inbound_image(None, "file-id")
     assert saved is None, "no adapter bot means no description, never a crash"
+
+
+def _vision_download_client(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pytest.TempPathFactory,
+    *,
+    body,
+    headers: dict[str, str] | None = None,
+    cap: int = 4096,
+) -> tuple[object, list[int]]:
+    """Wire a mock transport into download_inbound_image and count chunks pulled."""
+
+    from contextlib import asynccontextmanager
+
+    import httpx
+
+    from src.services import vision as vision_module
+
+    pulled = [0]
+
+    async def counted() -> Any:
+        async for chunk in body():
+            pulled[0] += len(chunk)
+            yield chunk
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, headers=headers or {}, content=counted())
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+
+    @asynccontextmanager
+    async def fake_lease() -> Any:
+        yield client
+
+    # download_inbound_image imports this by name at call time.
+    monkeypatch.setattr("src.services.http_client.lease_http_client", fake_lease)
+    monkeypatch.setattr(vision_module, "_MAX_IMAGE_BYTES", cap)
+    monkeypatch.setattr(vision_module, "_INBOX_DIR", tmp_path / "inbox")
+    return client, pulled
+
+
+@pytest.mark.asyncio
+async def test_oversized_inbound_image_is_rejected_without_being_buffered(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """One message naming a huge URL must not allocate the whole body in RAM."""
+
+    chunk = b"x" * 1024
+
+    async def body() -> Any:
+        for _ in range(400):  # 400 KiB against a 4 KiB cap
+            yield chunk
+
+    from src.services import vision as vision_module
+
+    client, pulled = _vision_download_client(monkeypatch, tmp_path, body=body, cap=len(chunk) * 4)
+    try:
+        saved = await vision_module.download_inbound_image("https://example.invalid/huge.png", None)
+    finally:
+        await client.aclose()
+    assert saved is None, "an oversized image is never persisted"
+    assert pulled[0] <= len(chunk) * 5, (
+        f"read {pulled[0]} bytes for a 4096-byte cap: the body was buffered"
+    )
+
+
+@pytest.mark.asyncio
+async def test_inbound_image_honours_a_declared_content_length(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """A lying-size header lets the download stop before any body byte is read."""
+
+    chunk = b"x" * 1024
+
+    async def body() -> Any:
+        for _ in range(400):
+            yield chunk
+
+    from src.services import vision as vision_module
+
+    client, pulled = _vision_download_client(
+        monkeypatch,
+        tmp_path,
+        body=body,
+        headers={"content-length": str(len(chunk) * 400)},
+        cap=2048,
+    )
+    try:
+        saved = await vision_module.download_inbound_image("https://example.invalid/huge.png", None)
+    finally:
+        await client.aclose()
+    assert saved is None
+    assert pulled == [0], "declared oversize must short-circuit before reading"
+
+
+@pytest.mark.asyncio
+async def test_small_inbound_image_still_downloads_and_persists(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """The streaming cap must not change the accepted-image behaviour."""
+
+    import hashlib
+
+    from src.services import vision as vision_module
+
+    payload = b"png-bytes"
+
+    async def body() -> Any:
+        yield payload
+
+    client, pulled = _vision_download_client(monkeypatch, tmp_path, body=body, cap=4096)
+    try:
+        saved = await vision_module.download_inbound_image("https://example.invalid/ok.png", None)
+    finally:
+        await client.aclose()
+    assert saved is not None and saved.read_bytes() == payload
+    assert saved.name == f"{hashlib.sha256(payload).hexdigest()}.png"
+    assert pulled == [len(payload)]
 
 
 @pytest.mark.asyncio

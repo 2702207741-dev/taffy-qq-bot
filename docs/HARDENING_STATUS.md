@@ -90,6 +90,16 @@ it must be rebuilt after any subsequent source/documentation changes.
   cross-directory cache regression test that also pins the intended behaviour
   (a same-directory write is still served from cache, and `reset_runtime_state()`
   still forces a reload).
+- `download_inbound_image` fetched a message-supplied image with `client.get`,
+  which buffers the whole response, and only `persist` applied
+  `_MAX_IMAGE_BYTES` -- so the rejection came after the allocation. One QQ image
+  segment naming a large object could therefore make the bot process pull
+  hundreds of megabytes inside the 20 s timeout window. The fetch now streams and
+  stops at the cap, and short-circuits on an oversize `Content-Length`. The
+  regression test counts bytes actually pulled from a mock transport: 400 KiB
+  served against a 4 KiB cap reads 5 KiB and saves nothing. Both new behaviour
+  tests were run against the previous code and failed there (exit 1), while the
+  accepted-image test passed on both, so they pin the fix rather than restating it.
 
 ## Verified platform matrix
 
@@ -239,8 +249,8 @@ Bot service (`src/`):
 - `search_chat_history` intentionally searches `g_<group>_*`, i.e. other
   members' stored turns for that group; this is documented as intended.
 - The vision fetch follows a message-supplied URL with only an `http(s)`
-  prefix check and no host allowlist, and buffers the body before applying the
-  size cap.
+  prefix check and no host allowlist. (The size cap is now enforced while
+  streaming; see the verified changes above.)
 
 ## Evidence limits
 

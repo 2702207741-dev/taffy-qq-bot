@@ -250,6 +250,31 @@ async def describe_image(path: Path) -> tuple[str, list[str]] | None:
     return parsed
 
 
+async def _read_capped_image(client: Any, url: str) -> bytes:
+    """Stream one inbound image and give up as soon as it exceeds the cap.
+
+    A plain ``client.get`` buffers the whole body before ``persist`` rejects it,
+    so a message naming a very large URL makes this process allocate all of it
+    inside the timeout window.  Returning empty bytes on overflow keeps the
+    existing contract: callers treat it as "no image", exactly as an oversized
+    payload was treated before.
+    """
+
+    async with client.stream("GET", url) as response:
+        response.raise_for_status()
+        declared = response.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > _MAX_IMAGE_BYTES:
+            return b""
+        chunks: list[bytes] = []
+        total = 0
+        async for chunk in response.aiter_bytes():
+            total += len(chunk)
+            if total > _MAX_IMAGE_BYTES:
+                return b""
+            chunks.append(chunk)
+        return b"".join(chunks)
+
+
 async def download_inbound_image(url: object, file_id: object) -> Path | None:
     """Persist the first inbound image; QQ media URLs expire within ~2h.
 
@@ -290,9 +315,7 @@ async def download_inbound_image(url: object, file_id: object) -> Path | None:
         try:
             async with asyncio.timeout(_TIMEOUT_SECONDS):
                 async with lease_http_client() as client:
-                    response = await client.get(url)
-                    response.raise_for_status()
-                    payload = response.content
+                    payload = await _read_capped_image(client, url)
             suffix = ".png"
             lowered = url.casefold()
             for candidate in (".gif", ".jpg", ".jpeg", ".webp", ".bmp"):
