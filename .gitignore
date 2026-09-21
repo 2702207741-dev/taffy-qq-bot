@@ -1,0 +1,79 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets & tokens
+.env
+.env.*
+!.env.example
+*.secrets
+*.secret
+*.credentials
+*.p12
+*.pfx
+napcat/
+napcat-config/
+
+# Runtime data
+data/
+logs/
+bot.log
+nonebot.log
+alerts.json
+alerts.json.*.bak
+alerts.json.bak
+watchlist.json
+watchlist.json.*.bak
+watchlist.json.bak
+schedule_config.local.json
+schedule_config.local.json.*.bak
+schedule_config.local.json.bak
+
+# Local release snapshots may contain historical credentials
+.versions/
+memory/
+
+# Caches
+steamdt_data.json
+bing_result.txt
+.csgo_cache/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Playwright
+.playwright-mcp/
+
+# Local control-loop run artifacts
+.control-loop/
+
+# CRG database (will be created after install)
+.code-review-graph/
+
+# OS
+Thumbs.db
+Desktop.ini
+.mimosa/
+
+# Desktop build outputs and local settings
+desktop/.venv/
+desktop/build/
+desktop/dist/
+desktop/*.spec
+desktop/.pytest_cache/
+desktop/.mypy_cache/
+desktop/.ruff_cache/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store

@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  schedule:
+    # Re-run dependency, history-secret, and compatibility gates every week.
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          version: "0.11.12"
+      - name: Sync locked environment
+        run: uv sync --frozen --all-groups --python "3.12"
+      - name: Verify lock file
+        run: uv lock --check
+      - name: Audit dependencies
+        run: uv audit --locked --preview-features audit
+      - name: Scan production sources for embedded secrets
+        run: uv run --frozen python scripts/check_secrets.py
+      - name: Lint
+        run: uv run --frozen ruff check bot.py scrape_steamdt.py scripts src tests
+      - name: Check formatting
+        run: uv run --frozen ruff format --check bot.py scrape_steamdt.py scripts src tests
+      - name: Type-check application sources
+        run: uv run --frozen mypy
+      - name: Test
+        run: uv run --frozen python scripts/run_isolated_tests.py -- --cov=src --cov-report=term-missing
+
+  compatibility:
+    name: Python ${{ matrix.python-version }} / ${{ matrix.os }}
+    needs: quality
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.13", "3.14"]
+        exclude:
+          - os: ubuntu-latest
+            python-version: "3.12"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          version: "0.11.12"
+      - name: Sync locked environment
+        run: uv sync --frozen --all-groups --python ${{ matrix.python-version }}
+      - name: Test supported runtime
+        run: uv run --python ${{ matrix.python-version }} --frozen python scripts/run_isolated_tests.py -- -q
+
+  desktop:
+    name: Desktop studio / Windows / Python 3.12
+    needs: quality
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          version: "0.11.12"
+      - name: Sync locked environment
+        run: uv sync --frozen --all-groups --python "3.12"
+      - name: Verify lock file
+        run: uv lock --check
+      - name: Lint
+        run: uv run --frozen ruff check .
+      - name: Check formatting
+        run: uv run --frozen ruff format --check .
+      - name: Type-check
+        run: uv run --frozen mypy
+      - name: Test
+        run: uv run --frozen pytest

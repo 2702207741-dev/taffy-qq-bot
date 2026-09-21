@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support and usage questions
+    url: https://github.com/2702207741-dev/taffy-qq-bot/discussions
+    about: Use Discussions once it has been enabled for the repository.
+  - name: Security policy
+    url: https://github.com/2702207741-dev/taffy-qq-bot/security/policy
+    about: Do not disclose vulnerabilities in public issues.

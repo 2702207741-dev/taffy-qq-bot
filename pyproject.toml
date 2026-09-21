@@ -1,0 +1,86 @@
+[project]
+name = "taffy-qq-bot"
+version = "0.6.0"
+description = "A privacy-conscious CS2 community assistant for QQ, built with NoneBot2 and OneBot V11."
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Taffy Contributors" }]
+keywords = ["cs2", "nonebot2", "onebot", "qq", "bot", "steam"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: Chinese (Simplified)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Communications :: Chat",
+]
+dependencies = [
+    "anthropic>=0.116.0",
+    "ddgs>=9.14.4",
+    "fastapi>=0.139.0",
+    "httpx>=0.28.1",
+    "nonebot-adapter-onebot>=2.4.6",
+    "nonebot2[fastapi,websockets]>=2.5.0",
+    "pillow>=11.2.0",
+    "playwright>=1.61.0",
+    "psutil>=7.0.0",
+    "python-dotenv>=1.2.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/2702207741-dev/taffy-qq-bot"
+Repository = "https://github.com/2702207741-dev/taffy-qq-bot"
+Issues = "https://github.com/2702207741-dev/taffy-qq-bot/issues"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.15.0",
+    "mypy>=2.2.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.21",
+    "types-psutil>=7.0.0.20250601",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+files = [
+    "bot.py",
+    "scrape_steamdt.py",
+    "scripts/check_secrets.py",
+    "scripts/config_snapshot.py",
+    "scripts/migrate_state.py",
+    "scripts/recovery_drill.py",
+    "scripts/verify_equivalence.py",
+    "scripts/verify_production_compat.py",
+    "src",
+]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true

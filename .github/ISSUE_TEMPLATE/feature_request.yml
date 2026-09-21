@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest a focused, user-supported improvement.
+title: "feature: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe who is affected and the current workaround.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: Include privacy, permissions, data-source, or operational implications where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

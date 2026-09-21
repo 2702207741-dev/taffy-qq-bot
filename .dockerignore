@@ -1,0 +1,24 @@
+# 不进镜像层：数据、虚拟环境、密钥、缓存、构建产物。
+data/
+.git/
+.venv/
+.env
+.env.*
+!.env.example
+desktop/
+napcat/
+napcat-config/
+gui-test-screenshots/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+tests/
+*.md
+!README.md
+steamdt_data.json
+schedule_config.local.json
+alerts.json
+watchlist.json

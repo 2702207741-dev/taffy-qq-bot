@@ -1,0 +1,146 @@
+/* =====================================================================
+   themes.css — 塔菲桌面工作台设计令牌 V4（粉彩夜猫娘 / Pastel Neko）
+
+   设计方向：冷灰黑暗夜 + 粉彩粉主色 + 粉彩青辅色，贴合猫娘人设
+   与 CS2 饰品市场的专业行情调性。详见 css/DESIGN.md。
+
+   规则：
+   1. 语义层变量全集；既有变量名一个不删（兼容旧引用）。
+   2. 所有 accent 浅变体一律 color-mix 从 --accent 动态派生。
+   3. app.css 只消费这里的变量，不得定义颜色字面量。
+   ===================================================================== */
+
+:root,
+[data-theme="light"] {
+  /* ── 表面（亮色：奶油白） ─────────────────────────── */
+  --bg: #f4f2f7;            /* 页面底：奶油白 */
+  --bg-panel: #ffffff;      /* 面板/卡片 */
+  --bg-hover: #eceaf2;
+  --bg-active: #e0dce8;
+  --surface-1: #ffffff;
+  --surface-2: #f6f4fa;
+  --surface-3: #ffffff;
+
+  /* ── 文本 ─────────────────────────────────────────── */
+  --text: #3c3c4e;
+  --text-strong: #2a2a3e;
+  --text-dim: #6a6a80;
+  --text-faint: #a0a0b8;
+
+  /* ── 描边 ─────────────────────────────────────────── */
+  --border: #dcd8e8;
+  --border-strong: #c8c4d8;
+  --border-soft: #eae6f2;
+
+  /* ── 品牌（亮色下用深粉保证可读） ─────────────────── */
+  --accent: #e879a8;        /* 粉彩粉（亮色变体） */
+  --accent-strong: color-mix(in srgb, var(--accent) 72%, #2a2a3e);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-2: #0e9cb8;      /* 粉彩青辅色（亮色可读版） */
+
+  /* ── 语义 ─────────────────────────────────────────── */
+  --up: #e04a3a;            /* 红涨（中国市场语义，勿改） */
+  --down: #2ab85a;          /* 绿跌 */
+  --warn: #d98a20;
+  --danger: #e04a3a;
+  --ok: #2ab85a;
+
+  /* ── 阴影 ─────────────────────────────────────────── */
+  --shadow: 0 1px 3px rgba(60, 60, 78, .06), 0 4px 14px rgba(60, 60, 78, .05);
+  --shadow-1: 0 1px 2px rgba(60, 60, 78, .05), 0 2px 8px rgba(60, 60, 78, .04);
+  --shadow-2: 0 4px 10px rgba(60, 60, 78, .08), 0 10px 28px rgba(60, 60, 78, .08);
+  --shadow-3: 0 10px 24px rgba(60, 60, 78, .12), 0 24px 60px rgba(60, 60, 78, .14);
+
+  /* ── 骨架屏 / 图表 ────────────────────────────────── */
+  --skeleton-base: color-mix(in srgb, var(--border) 55%, var(--bg-panel));
+  --skeleton-glow: color-mix(in srgb, var(--border) 92%, var(--text-faint));
+  --chart-grid: color-mix(in srgb, var(--border) 66%, transparent);
+  --chart-axis: var(--text-faint);
+  --chart-tooltip-bg: color-mix(in srgb, var(--surface-3) 96%, var(--bg));
+}
+
+[data-theme="dark"] {
+  /* ── 表面（暗夜：冷灰黑，去紫） ───────────────────── */
+  --bg: #14141c;
+  --bg-panel: #1a1a24;
+  --bg-hover: #22222e;
+  --bg-active: #2a2a3a;
+  --surface-1: #1a1a24;
+  --surface-2: #22222e;
+  --surface-3: #282836;
+
+  /* ── 文本 ─────────────────────────────────────────── */
+  --text: #e6e6f0;
+  --text-strong: #ffffff;
+  --text-dim: #a0a0b8;
+  --text-faint: #70708c;
+
+  /* ── 描边 ─────────────────────────────────────────── */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-soft: rgba(255, 255, 255, 0.05);
+
+  /* ── 品牌（粉彩粉） ───────────────────────────────── */
+  --accent: #f472b6;        /* 粉彩粉主色（牛奶粉） */
+  --accent-strong: color-mix(in srgb, var(--accent) 82%, #ffd6ec);
+  --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+  --accent-2: #67e8f9;      /* 粉彩青辅色 */
+
+  /* ── 语义 ─────────────────────────────────────────── */
+  --up: #f0564a;            /* 橙红（涨） */
+  --down: #4ade80;          /* 黄绿（跌） */
+  --warn: #fbbf24;
+  --danger: #f0564a;
+  --ok: #4ade80;
+
+  /* ── 阴影（暗夜克制质感） ─────────────────────────── */
+  --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .3);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .35), 0 2px 8px rgba(0, 0, 0, .25);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, .6), 0 24px 64px rgba(0, 0, 0, .5);
+}
+
+/* ── 主色族（accent-soft/ring 全部动态派生） ────────── */
+[data-accent="warm"]  { --accent: #f472b6; }  /* 粉彩粉（默认） */
+[data-accent="rose"]  { --accent: #67e8f9; }  /* 粉彩青 */
+[data-accent="honey"] { --accent: #a78bfa; }  /* 粉彩薰衣草 */
+[data-accent="cream"] { --accent: #fb923c; }  /* 粉彩蜜桃 */
+[data-theme="dark"][data-accent="rose"]  { --accent: #67e8f9; }
+[data-theme="dark"][data-accent="honey"] { --accent: #a78bfa; }
+[data-theme="dark"][data-accent="cream"] { --accent: #fb923c; }
+
+/* ── 几何 / 节奏 / 字阶（主题无关） ─────────────────── */
+:root {
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  --font-xs: 11px;
+  --font-sm: 12px;
+  --font-md: 13px;
+  --font-lg: 15px;
+  --font-xl: 18px;
+  --font-display: 26px;
+
+  --font-mono: Consolas, "Cascadia Mono", "JetBrains Mono", monospace;
+
+  --control-height: 30px;
+
+  --dur-fast: 120ms;
+  --dur-norm: 200ms;
+  --ease: cubic-bezier(.2, .7, .3, 1);
+
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+
+  /* 粉彩发光（仅用于 active 指示/状态点/主按钮 hover） */
+  --glow-accent: 0 0 12px color-mix(in srgb, var(--accent) 20%, transparent);
+  --glow-accent-soft: 0 0 6px color-mix(in srgb, var(--accent) 12%, transparent);
+}

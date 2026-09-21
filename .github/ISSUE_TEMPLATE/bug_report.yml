@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible problem without sharing secrets or personal data.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include API keys, tokens, QQ identifiers, message logs, Steam inventory data, database files, or exploit details. Security reports belong in the private reporting channel.
+  - type: input
+    id: version
+    attributes:
+      label: Taffy version or commit
+      placeholder: "0.6.0 / abc1234"
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment mode
+      options:
+        - Windows native
+        - Linux native
+        - Docker Compose
+        - Desktop studio
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Replace all credentials and personal data with placeholders.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behaviour
+    validations:
+      required: true

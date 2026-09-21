@@ -1,0 +1,60 @@
+# 塔菲一键栈（云端 ECS 用）。本地 Windows 保持原生 scripts/start_all.ps1 不动。
+#
+# 与 systemd watchdog（desktop/scripts/qq_watchdog.sh）的关系：**并存不替换**。
+# - 用 compose 部署后，容器的 restart: unless-stopped 承担进程守护，请停用
+#   宿主机上的 qq_watchdog timer（避免双守护冲突）；
+# - 想回到 systemd 方案：docker compose down 后恢复 timer 即可（数据都在
+#   ./data 卷与 ./.env，两边共享同一份，无迁移成本）。
+#
+# 首次部署（云端切换步骤）：
+#   1. 上传仓库代码到 ECS（git clone / rsync）；
+#   2. cp .env.example .env 并填好所有凭据（ADMIN_API_TOKEN 等）；
+#   3. docker compose config        # 校验
+#   4. docker compose up -d --build # 启动
+#   5. curl -s localhost:8080/health/ready   # 期望 200
+# 回滚：
+#   docker compose down && 恢复 systemd timer（qq_watchdog 路径不变）。
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: taffy-bot:latest
+    # 只绑容器内网；如需本机访问面板，映射到 127.0.0.1（勿绑 0.0.0.0）。
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # 持久数据卷：SQLite 库/日志/图片收件箱都在这。
+      - ./data:/app/data
+      # .env 只读挂载进容器（密钥不进镜像层）。
+      - ./.env:/app/.env:ro
+    environment:
+      - TZ=Asia/Shanghai
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/health/live', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  napcat:
+    # NapCat 官方镜像（QQ 协议端）。首次需在容器内完成登录（扫码/配置）。
+    # 本地 napcat/ 目录是 Windows 版安装，与容器版不互通；容器版配置
+    # 挂载 ./napcat-config 目录，按官方文档初始化。
+    image: mlikiowa/napcat-docker:latest
+    restart: unless-stopped
+    volumes:
+      - ./napcat-config:/app/napcat
+      - ./napcat-config/config:/app/config
+      # OneBot 正向 WS 端口（bot 通过 ONEBOT_V11_WS_URLS 连它）。
+      - ./napcat-config/onebot11:/app/onebot11
+    environment:
+      - TZ=Asia/Shanghai
+      - NAPCAT_UID=1000
+      - NAPCAT_GID=1000
+    ports:
+      - "127.0.0.1:3001:3001"

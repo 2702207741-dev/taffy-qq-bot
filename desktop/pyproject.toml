@@ -1,0 +1,51 @@
+[project]
+name = "taffy-desktop-studio"
+version = "0.5.0"
+description = "塔菲桌面工作台 — Taffy Desktop Studio（pywebview 桌面壳）"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "httpx>=0.28.1",
+    "keyring>=25.6.0",
+    "psutil>=7.0.0",
+    "pywebview>=5.1",
+    "windows-toasts>=1.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13.0",
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.0",
+    "types-psutil>=7.2.2.20260518",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.12"
+files = ["taffy_desktop"]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[tool.coverage.run]
+branch = true
+source = ["taffy_desktop"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true

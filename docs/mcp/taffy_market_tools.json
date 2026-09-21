@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "塔菲行情 MCP 工具定义（零依赖参考实现）",
+  "description": "塔菲 CS2 饰品行情能力的 MCP 工具清单（JSON schema 纯定义文件，不引 SDK）。外部 AI/工具可按 MCP 协议（stdio + JSON-RPC 2.0）实现客户端，用 HTTP 调用塔菲的 Bearer 保护端点。所有工具 fail-closed：数据不足返回 unavailable 语义，绝不编造数字。",
+  "protocol": "MCP 2025-06-18",
+  "transport": "stdio (JSON-RPC 2.0)",
+  "server": {
+    "name": "taffy-market-mcp",
+    "version": "0.1.0"
+  },
+  "tools": [
+    {
+      "name": "market_broad",
+      "description": "大盘行情概览（实时指数/成交展示/盘面温度）。数字来自本地已验证数据源；温度历史不足时返回不可用。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "GET /api/desktop/market/overview"
+    },
+    {
+      "name": "market_item",
+      "description": "单件饰品实时报价（仅展示通过时间校验的报价）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "饰品名，如 AK-47 | Redline"
+          }
+        },
+        "required": ["item"]
+      },
+      "endpoint": "GET /api/desktop/market/item?item={item}"
+    },
+    {
+      "name": "market_index_closes",
+      "description": "大盘日线收盘序列（供趋势分析）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "GET /api/desktop/market/index-closes"
+    },
+    {
+      "name": "market_dip",
+      "description": "抄底情景回测：当前点位历史分位/回撤/同档位信号日后 7/14/30 天历史情景表。样本不足明确拒绝。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "GET /api/desktop/market/dip"
+    },
+    {
+      "name": "market_prediction",
+      "description": "短期走势预测（温度×动量分桶频率 + 规则信号多方法一致度）。概率全部来自历史频数，样本不足不输出伪概率。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "endpoint": "GET /api/desktop/market/prediction"
+    },
+    {
+      "name": "market_rankings",
+      "description": "市场榜单（异动/涨跌/流动性）。未达 24 小时积累门槛时返回进度说明，绝不用挂单量冒充成交量。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "board": {
+            "type": "string",
+            "enum": ["异动", "涨跌", "流动性"],
+            "description": "榜单类型，默认异动"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "条数 5-20，默认 10"
+          }
+        },
+        "required": ["board"]
+      },
+      "endpoint": "GET /api/desktop/market/rankings?board={board}&limit={limit}"
+    },
+    {
+      "name": "market_search",
+      "description": "按关键词搜索目录饰品（返回规范名与中文名）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "搜索关键词"
+          }
+        },
+        "required": ["query"]
+      },
+      "endpoint": "GET /api/desktop/market/search?query={query}"
+    },
+    {
+      "name": "market_kline",
+      "description": "K 线数据（日 K 蜡烛 OHLC）。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "饰品名"
+          }
+        },
+        "required": ["item"]
+      },
+      "endpoint": "GET /api/desktop/market/kline?item={item}"
+    },
+    {
+      "name": "market_compare",
+      "description": "跨平台比价（SteamDT 实时 + CSQAQ 六平台快照）。任一侧不可用如实标注。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "饰品名"
+          }
+        },
+        "required": ["item"]
+      },
+      "endpoint": "GET /api/desktop/market/compare?item={item}"
+    },
+    {
+      "name": "market_score",
+      "description": "买卖参考评分（确定性规则，零 LLM）。样本门槛 24 个日线，不足整体拒评。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "饰品名"
+          }
+        },
+        "required": ["item"]
+      },
+      "endpoint": "GET /api/desktop/market/score?item={item}"
+    },
+    {
+      "name": "market_case_ev",
+      "description": "开箱 EV 计算器（Valve 官方掉率 × 本地已校验市价）。固定附「历史数据不构成收益承诺」。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "case": {
+            "type": "string",
+            "description": "箱子名称（中文或英文）"
+          }
+        },
+        "required": ["case"]
+      },
+      "endpoint": "GET /api/desktop/market/case-ev?case={case}"
+    },
+    {
+      "name": "market_hoard",
+      "description": "挂刀指数（Steam 挂刀比例中位/分位）。数据源停止更新时如实标注存档天数。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "可选：单品挂刀参考"
+          }
+        },
+        "required": []
+      },
+      "endpoint": "GET /api/desktop/market/hoard?item={item}"
+    }
+  ],
+  "notes": {
+    "auth": "全部端点需 Bearer token（与 admin API 同源，env ADMIN_API_TOKEN）；desktop API 总开关 TAFFY_DESKTOP_API_ENABLED",
+    "fail_closed": "数据不足/上游故障时端点返回 available:false 语义，客户端必须如实转述，不得让模型补写数字",
+    "zero_dependency": "本文件为纯 JSON 定义；参考实现见 docs/MCP_REFERENCE.md（stdlib JSON-RPC over stdio 骨架）"
+  }
+}

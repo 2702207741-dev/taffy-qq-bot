@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>塔菲管理面板</title>
+<link rel="stylesheet" href="/admin-panel/style.css">
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="login" class="login-wrap hidden">
+  <div class="card login-card">
+    <div class="login-logo">🐱</div>
+    <h1>塔菲管理面板</h1>
+    <p class="dim">输入 ADMIN_API_TOKEN（.env 中的管理令牌）</p>
+    <p class="dim" style="font-size:12px">会话 12 小时有效，超时后需重新登录</p>
+    <div class="row">
+      <input type="password" id="token-input" placeholder="Bearer token" class="input flex1">
+      <button class="btn primary" id="login-btn">连接</button>
+    </div>
+    <p class="err hidden" id="login-err"></p>
+  </div>
+</div>
+
+<!-- 应用骨架 -->
+<div id="app" class="app hidden">
+  <div class="backdrop" id="sidebar-backdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <svg class="cat-logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+        <path d="M6.5 13 L4.5 4.5 L12 8.5 Z" fill="var(--accent)"/>
+        <path d="M25.5 13 L27.5 4.5 L20 8.5 Z" fill="var(--accent)"/>
+        <circle cx="16" cy="17.5" r="10.5" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <circle cx="11.5" cy="16" r="1.7" fill="var(--accent)"/>
+        <circle cx="20.5" cy="16" r="1.7" fill="var(--accent)"/>
+        <path d="M15 19.6 L17 19.6 L16 21 Z" fill="var(--brand-warm)"/>
+        <path d="M5.5 17.2 L10 17.7 M5.5 19.8 L10 19.3" stroke="var(--accent)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+        <path d="M26.5 17.2 L22 17.7 M26.5 19.8 L22 19.3" stroke="var(--accent)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+        <circle cx="10" cy="19.4" r="1.5" fill="var(--brand-warm)" opacity="0.45"/>
+        <circle cx="22" cy="19.4" r="1.5" fill="var(--brand-warm)" opacity="0.45"/>
+      </svg>
+      <span>塔菲面板</span>
+    </div>
+    <nav class="side-nav">
+      <button class="side-item active" data-tab="dashboard"><span class="ico">📊</span>仪表盘</button>
+      <button class="side-item" data-tab="broadcast"><span class="ico">📣</span>广播发送</button>
+      <button class="side-item" data-tab="scheduler"><span class="ico">⏰</span>定时配置</button>
+      <button class="side-item" data-tab="permissions"><span class="ico">🔐</span>权限管理</button>
+      <button class="side-item" data-tab="usage"><span class="ico">📜</span>使用审计</button>
+      <button class="side-item" data-tab="monitors"><span class="ico">📡</span>监控总览</button>
+      <button class="side-item" data-tab="sessions"><span class="ico">💬</span>会话管理</button>
+      <button class="side-item" data-tab="learning"><span class="ico">🧠</span>学习记忆</button>
+    </nav>
+    <div class="side-foot">
+      <button class="side-item" id="notify-bell" title="新事件通知"><span class="ico">🔔</span>提醒<span class="count-badge hidden" id="event-badge">0</span></button>
+      <button class="side-item" id="logout"><span class="ico">🚪</span>退出登录</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="菜单">☰</button>
+      <h1 id="page-title">仪表盘</h1>
+      <span class="flex1"></span>
+      <span class="dim mono" id="clock"></span>
+    </header>
+
+    <div class="content">
+
+      <!-- 仪表盘 -->
+      <section id="tab-dashboard">
+        <div class="stat-grid" id="stat-cards"></div>
+        <div class="card">
+          <h2>市场功能状态</h2>
+          <div class="market-status" id="market-status"></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h2>使用趋势（按天）</h2>
+            <div class="chart-box" id="chart-usage-trend"></div>
+          </div>
+          <div class="card">
+            <h2>功能占比（近 7 天）</h2>
+            <div class="chart-box" id="chart-feature-pie"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>大盘日线收盘趋势</h2>
+          <div class="chart-box tall" id="chart-market-trend"></div>
+        </div>
+        <div class="card">
+          <h2>LLM 用量（近 7 天）</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>日期</th><th>请求数</th><th>输入 tokens</th><th>输出 tokens</th></tr></thead>
+            <tbody id="llm-usage-list"></tbody>
+          </table></div>
+          <p class="dim" id="llm-usage-note" style="margin-top:6px"></p>
+        </div>
+        <div class="card">
+          <h2>各功能使用量（最近 500 条）</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>功能</th><th>次数</th><th>占比</th></tr></thead>
+            <tbody id="feature-stats"></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <h2>最近使用记录</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>时间</th><th>用户</th><th>功能</th><th>输入</th><th>输出</th></tr></thead>
+            <tbody id="recent-usage"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 广播 -->
+      <section id="tab-broadcast" class="hidden">
+        <div class="card">
+          <h2>选择目标群</h2>
+          <p class="dim" id="broadcast-source-note">群列表来自定时配置与近期投递记录；也可手动添加。</p>
+          <div class="row" style="margin-bottom:10px">
+            <input type="text" inputmode="numeric" id="broadcast-manual-group" class="input" placeholder="手动添加群号" style="width:180px">
+            <button class="btn" id="broadcast-add-group">添加</button>
+          </div>
+          <div class="chip-list" id="broadcast-groups"></div>
+        </div>
+        <div class="card">
+          <h2>广播正文</h2>
+          <textarea id="broadcast-text" class="input" rows="5" maxlength="2000" placeholder="输入要发送的文本（≤2000 字）"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="btn primary" id="broadcast-send">发送广播</button>
+            <span class="dim" id="broadcast-counter"></span>
+          </div>
+        </div>
+        <div class="card hidden" id="broadcast-result-card">
+          <h2>发送结果</h2>
+          <div id="broadcast-result"></div>
+        </div>
+        <div class="card">
+          <h2>投递台账（最近 200 条）</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>定时任务</th><th>群</th><th>状态</th><th>次数</th><th>最后错误</th><th>时间</th><th>操作</th></tr></thead>
+            <tbody id="broadcast-deliveries"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 定时配置 -->
+      <section id="tab-scheduler" class="hidden">
+        <div class="card">
+          <h2>定时播报配置</h2>
+          <div class="form-row">
+            <span class="form-label">总开关</span>
+            <label class="switch"><input type="checkbox" id="sched-enabled"><span class="slider"></span></label>
+          </div>
+          <div class="form-row">
+            <span class="form-label">播报时间</span>
+            <div class="row">
+              <input type="time" id="sched-time-input" class="input" style="width:120px">
+              <button class="btn" id="sched-time-add">添加时间</button>
+            </div>
+          </div>
+          <div class="chip-list" id="sched-times"></div>
+          <div class="form-row" style="margin-top:12px">
+            <span class="form-label">推送群</span>
+            <input type="text" id="sched-groups" class="input flex1" placeholder="群号，逗号分隔，如 10001,10002">
+          </div>
+          <div class="row" style="margin-top:16px">
+            <button class="btn primary" id="sched-save">保存配置</button>
+            <span class="dim" id="sched-version"></span>
+          </div>
+          <p class="err hidden" id="sched-error"></p>
+        </div>
+      </section>
+
+      <!-- 权限 -->
+      <section id="tab-permissions" class="hidden">
+        <div class="card">
+          <h2>设置权限</h2>
+          <div class="row">
+            <input type="text" inputmode="numeric" id="perm-user" class="input" placeholder="QQ 号" style="width:150px">
+            <select id="perm-feature" class="input"></select>
+            <select id="perm-allowed" class="input">
+              <option value="1">允许</option>
+              <option value="0">禁用</option>
+            </select>
+            <button class="btn primary" id="perm-set">设置</button>
+            <button class="btn" id="perm-clear">清除覆盖（恢复默认）</button>
+            <button class="btn" id="perm-export">导出 CSV</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>当前覆盖配置</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>用户</th><th>功能</th><th>状态</th><th>更新时间</th></tr></thead>
+            <tbody id="perm-list"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 审计 -->
+      <section id="tab-usage" class="hidden">
+        <div class="card">
+          <h2>审计查询</h2>
+          <div class="row">
+            <input type="text" inputmode="numeric" id="usage-user" class="input" placeholder="QQ 号（可选）" style="width:160px">
+            <select id="usage-feature" class="input"><option value="">全部功能</option></select>
+            <button class="btn primary" id="usage-query">查询</button>
+            <button class="btn" id="usage-prev">上一页</button>
+            <button class="btn" id="usage-next">下一页</button>
+            <button class="btn sm" id="usage-export">导出 CSV（当前过滤条件）</button>
+            <span class="dim" id="usage-total"></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap"><table>
+            <thead><tr><th>时间</th><th>用户</th><th class="col-narrow">群</th><th>功能</th><th>输入</th><th>输出</th></tr></thead>
+            <tbody id="usage-list"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 监控 -->
+      <section id="tab-monitors" class="hidden">
+        <div class="card">
+          <h2>自选列表（按用户，点击展开）</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>用户</th><th>数量</th><th>操作</th></tr></thead>
+            <tbody id="watchlist-summary"></tbody>
+          </table></div>
+          <div id="watchlist-detail"></div>
+        </div>
+        <div class="card">
+          <h2>价格预警（最近 50 条）</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>用户</th><th>饰品</th><th>方向</th><th>目标价</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="alert-list"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 会话管理 -->
+      <section id="tab-sessions" class="hidden">
+        <div class="card">
+          <h2>会话列表</h2>
+          <p class="dim">⚠️ 仅运维用途：会话包含用户与塔菲的聊天原文，请勿外泄。删除会物理清空该会话（含摘要）。</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>会话 Key</th><th>消息数</th><th>最新时间</th><th>操作</th></tr></thead>
+            <tbody id="session-list"></tbody>
+          </table></div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="session-refresh">刷新</button>
+          </div>
+        </div>
+        <div class="card hidden" id="session-detail-card">
+          <h2 id="session-detail-title">会话详情</h2>
+          <div id="session-detail"></div>
+        </div>
+      </section>
+
+      <!-- 学习 -->
+      <section id="tab-learning" class="hidden">        <div class="card">
+          <h2>学习记忆 <span class="dim" id="learning-stats"></span></h2>
+          <div class="row">
+            <select id="learning-status" class="input">
+              <option value="">全部状态</option>
+              <option value="pending">待确认</option>
+              <option value="accepted">已接受</option>
+              <option value="rejected">已拒绝</option>
+              <option value="archived">已归档</option>
+            </select>
+            <button class="btn primary" id="learning-query">查询</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap"><table>
+            <thead><tr><th>用户</th><th>维度</th><th>内容</th><th>依据</th><th>状态</th><th>权重</th><th>时间</th><th>操作</th></tr></thead>
+            <tbody id="learning-list"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- 确认弹窗 -->
+<div class="modal-mask hidden" id="modal-mask">
+  <div class="modal">
+    <h3 id="modal-title">确认</h3>
+    <p id="modal-text"></p>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="modal-cancel">取消</button>
+      <button class="btn danger" id="modal-confirm">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 容器 -->
+<div class="toast-stack" id="toast-stack"></div>
+
+<script src="/admin-panel/app.js"></script>
+</body>
+</html>

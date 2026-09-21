@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use Taffy in research or a publication, please cite this software."
+title: "Taffy: self-hosted CS2 QQ community assistant"
+version: 0.6.0
+date-released: 2026-09-21
+license: Apache-2.0
+authors:
+  - name: Taffy Contributors
+repository-code: "https://github.com/2702207741-dev/taffy-qq-bot"

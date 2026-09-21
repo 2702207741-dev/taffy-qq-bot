@@ -1,0 +1,37 @@
+# Codex for Open Source application worksheet
+
+This worksheet is deliberately factual. It is a preparation aid, not evidence that OpenAI will select the project. OpenAI says it considers repository usage, ecosystem importance, active maintenance, maintainer role/permissions, and program capacity; selection is discretionary. See the official [program page](https://developers.openai.com/community/codex-for-oss) and [terms](https://learn.chatgpt.com/docs/codex-for-oss-terms).
+
+## Publish first
+
+Before applying, create a public GitHub repository and complete every item in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). Make the maintainer's GitHub profile public and make sure its account visibly owns or has write access to the repository. Do not submit confidential material: the program terms state that application materials are not confidential.
+
+## Form fields
+
+### Maintainer role
+
+Choose **Primary maintainer** only if you actually own or lead releases, issue triage, reviews, and roadmap decisions for this repository. Otherwise choose **Core maintainer** only if you have sustained write access and ongoing maintenance responsibility.
+
+### Why the repository qualifies (maximum 500 characters)
+
+Use only verified current metrics. Replace every bracket before submitting:
+
+> Taffy is a self-hosted, open-source CS2 assistant for Chinese QQ communities, built on NoneBot2 and OneBot V11. It emphasises local state, explicit privacy boundaries, reproducible locks, secret-history scanning, CI, and deterministic tests. Current public evidence: [stars] stars, [forks] forks, [release downloads or installs], [active users/groups if you can substantiate them], and [recent PR/issue/release activity]. I am the [accurate role] responsible for [specific maintenance duties].
+
+Do not substitute aspirations, local development activity, or unverified user counts for public evidence. A new repository can still be submitted, but its selection odds are inherently harder to demonstrate than those of an established, actively used project.
+
+### API-credit use (maximum 500 characters)
+
+> 我会把 API 额度仅用于本仓库的维护工作流：对已脱敏的 issue 分类；依据失败 CI 生成可审查的复现与修复建议；汇总 PR 的风险和测试缺口；从已合并 diff 起草发布说明。最终审查、合并和发布始终由人类维护者完成。不会上传 `.env`、生产数据库、聊天原文、用户身份信息，也不会扫描无权管理的仓库或系统。
+
+### Other details (maximum 500 characters)
+
+> 塔菲的公开发行版将维护安全披露政策、贡献规范、数据源政策、隐私说明、锁定依赖、GitHub Actions、历史密钥扫描和独立测试。它面向自托管的中文 CS2 QQ 社群；市场数据存在延迟或缺失时会明确标注，不把模型输出伪装成事实或投资建议。
+
+## Final accuracy gate
+
+- Use the ChatGPT-account email required by the form.
+- Use the actual public GitHub username and public repository URL.
+- Provide the actual OpenAI organization ID from the Platform dashboard.
+- Request Codex Security only for repositories you own, maintain, or are authorised to administer.
+- Keep a copy of the exact answers submitted and update them if OpenAI requests verification.
