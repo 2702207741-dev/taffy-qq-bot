@@ -120,8 +120,23 @@ interpreter also cleared Ruff (`All checks passed!`), `ruff format --check`
 exit 2 there with `Secret scan could not complete: git ls-files failed`, because
 an extracted archive has no Git metadata: the scanner refuses to report a pass on
 an incomplete file set, so that gate is only satisfied in a real checkout (Windows,
-exit 0) and in CI. The 3.13 and 3.14 runs emitted warnings the 3.12 run did not,
-without any test failing; they are recorded in the isolated logs, not summarised here.
+exit 0) and in CI.
+
+Warnings are not failures, but two kinds are forward-compatibility signals and
+are recorded rather than smoothed over. The 3.13 run emitted 102 warnings and the
+3.14 run 205, where 3.12 emitted none. The `DeprecationWarning`s all traced to
+upstream `nonebot/typing.py:103` calling the private `ForwardRef._evaluate`
+without `type_params`, from `nonebot` itself and from `tests/test_chat_market.py`
+and `tests/test_reddit_news.py` importing it. CPython documents that this "will be
+disallowed in Python 3.15" and that the private API "will be removed in Python
+3.16", so a future NoneBot release is a prerequisite for supporting those
+interpreters -- which is outside the declared `>=3.12,<3.15` window. 3.14
+additionally produced two `PytestUnraisableExceptionWarning` entries from an
+exception ignored inside
+`asyncio.selector_events._SelectorTransport.__del__` during
+`test_index_daily_lifecycle.py::test_load_closes_serves_only_finalized_history`;
+the failing frame is stdlib teardown code, not project code, and the test still
+passed.
 
 One caveat that must not be smoothed over: the first Linux run of this matrix
 **failed** on 3.12 while 3.13 and 3.14 passed the same archive. That was not a
