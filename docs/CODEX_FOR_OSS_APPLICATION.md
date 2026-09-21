@@ -26,7 +26,7 @@ Do not substitute aspirations, local development activity, or unverified user co
 
 These are reproducible properties of this repository, not adoption metrics. State them only for the commit you publish, and link the CI run that shows them. They do not substitute for usage evidence, and "no known advisories" is not "no vulnerabilities":
 
-- Supported interpreters `>=3.12,<3.15`; the isolated suite collects 2,018 tests and passes on Linux for 3.12.3, 3.13.13 and 3.14.6, and on Windows for 3.12 (2,017 passed, 1 skipped). See `docs/HARDENING_STATUS.md` for the per-interpreter table and its platform limits.
+- Supported interpreters `>=3.12,<3.15`; the isolated suite collects 2,021 tests and passes on Linux for 3.12.3, 3.13.13 and 3.14.6, and on Windows for 3.12 (2,020 passed, 1 skipped). See `docs/HARDENING_STATUS.md` for the per-interpreter table and its platform limits.
 - Ruff lint, Ruff format check, and mypy are clean for the main package and the desktop studio; both dependency sets audit clean against OSV at the locked versions.
 - GitHub Actions are pinned to commit SHAs rather than mutable tags; secret scanning covers the working tree, reachable history, and the built release archive in CI.
 - A release-archive verifier checks committed-file identity, missing/extra/duplicate members, unsafe paths, symlinks, Windows path aliases and credential patterns.

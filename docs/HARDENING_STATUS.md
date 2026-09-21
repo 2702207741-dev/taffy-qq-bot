@@ -109,15 +109,16 @@ None of them used the private upstream project.
 
 | Python | Platform | Isolated suite | Exit |
 | --- | --- | --- | --- |
-| 3.12 | Windows | 2,017 passed, 1 skipped, 75 subtests passed | 0 |
-| 3.12.3 | Linux (WSL Ubuntu) | 2,018 passed, 75 subtests passed | 0 |
-| 3.13.13 | Linux (WSL Ubuntu) | 2,018 passed, 75 subtests passed | 0 |
-| 3.14.6 | Linux (WSL Ubuntu) | 2,018 passed, 75 subtests passed | 0 |
+| 3.12 | Windows | 2,020 passed, 1 skipped, 75 subtests passed | 0 |
+| 3.12.3 | Linux (WSL Ubuntu) | 2,021 passed, 75 subtests passed | 0 |
+| 3.13.13 | Linux (WSL Ubuntu) | 2,021 passed, 75 subtests passed | 0 |
+| 3.14.6 | Linux (WSL Ubuntu) | 2,021 passed, 75 subtests passed | 0 |
 
-Both platforms collect 2,018 items: the Windows run records one of them as
-skipped, each Linux run collects and passes all 2,018. The three Linux rows used
-the archive `e3af3dae781406bec6dbfe686ab3e4634220904b1f62c0194ac366f70abdf516`
-(commit `2038c66`), and every count above was read from that run's isolated
+Both platforms collect 2,021 items: the Windows run records one of them as
+skipped, each Linux run collects and passes all 2,021. The three Linux rows and
+the Windows row used the archive
+`84705363772b9906949d753ab5a9ffb5e67acebf032609699526ac7b82964f5e`
+(commit `fc1cf6d`), and every count above was read from that run's isolated
 `pytest.log` rather than inferred. This page was then rebuilt into the shipped
 archive with documentation-only changes, so the shipped hash differs while the
 tested source under `src/`, `scripts/`, `tests/` and `bot.py` does not.
@@ -132,21 +133,24 @@ an extracted archive has no Git metadata: the scanner refuses to report a pass o
 an incomplete file set, so that gate is only satisfied in a real checkout (Windows,
 exit 0) and in CI.
 
-Warnings are not failures, but two kinds are forward-compatibility signals and
-are recorded rather than smoothed over. The 3.13 run emitted 102 warnings and the
-3.14 run 205, where 3.12 emitted none. The `DeprecationWarning`s all traced to
-upstream `nonebot/typing.py:103` calling the private `ForwardRef._evaluate`
-without `type_params`, from `nonebot` itself and from `tests/test_chat_market.py`
-and `tests/test_reddit_news.py` importing it. CPython documents that this "will be
+Warnings are not failures, but two kinds are worth recording rather than
+smoothing over. The 3.13 run emitted 102 warnings and the 3.14 run 204, where
+3.12 emitted none. The `DeprecationWarning`s all traced to upstream
+`nonebot/typing.py:103` calling the private `ForwardRef._evaluate` without
+`type_params`, from `nonebot` itself and from `tests/test_chat_market.py` and
+`tests/test_reddit_news.py` importing it. CPython documents that this "will be
 disallowed in Python 3.15" and that the private API "will be removed in Python
 3.16", so a future NoneBot release is a prerequisite for supporting those
-interpreters -- which is outside the declared `>=3.12,<3.15` window. 3.14
-additionally produced two `PytestUnraisableExceptionWarning` entries from an
-exception ignored inside
+interpreters -- which is outside the declared `>=3.12,<3.15` window.
+
+One 3.14 warning did not reproduce and is therefore reported as noise, not as a
+property: the earlier run showed two `PytestUnraisableExceptionWarning` entries
+from an exception ignored inside
 `asyncio.selector_events._SelectorTransport.__del__` during
-`test_index_daily_lifecycle.py::test_load_closes_serves_only_finalized_history`;
-the failing frame is stdlib teardown code, not project code, and the test still
-passed.
+`test_index_daily_lifecycle.py::test_load_closes_serves_only_finalized_history`,
+and the re-run of the same suite at `fc1cf6d` showed none. A warning that appears
+in one run of 2,021 tests is a nondeterministic stdlib teardown path, and saying
+"3.14 emits these" would overstate what was observed.
 
 One caveat that must not be smoothed over: the first Linux run of this matrix
 **failed** on 3.12 while 3.13 and 3.14 passed the same archive. That was not a
