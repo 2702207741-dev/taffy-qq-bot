@@ -239,6 +239,47 @@ def _write_library(directory: Path, entries: list[dict]) -> None:
     )
 
 
+def test_sticker_manifest_cache_does_not_leak_between_libraries(
+    tmp_path: Path,
+) -> None:
+    """A relocated library must not inherit the previous library's cache.
+
+    The manifest cache is time-boxed, so a cache keyed only by time served one
+    library's contents to another library for the whole window. That surfaced as
+    an order-dependent sticker-listing failure in the desktop API tests.
+    """
+
+    import src.services.stickers as stickers_module
+
+    library_a = tmp_path / "alpha"
+    library_b = tmp_path / "beta"
+    _write_library(library_a, [{"file": "a.png", "tags": ["甲"]}])
+    _write_library(library_b, [{"file": "b.png", "tags": ["乙"]}])
+    (library_a / "a.png").write_bytes(b"png-a")
+    (library_b / "b.png").write_bytes(b"png-b")
+
+    reset_runtime_state()
+    with _patch(stickers_module, "_STICKER_DIR", library_a):
+        names_a = {entry.path.name for entry in stickers_module._load_manifest().entries}
+    with _patch(stickers_module, "_STICKER_DIR", library_b):
+        names_b = {entry.path.name for entry in stickers_module._load_manifest().entries}
+
+    assert names_a == {"a.png"}
+    assert names_b == {"b.png"}
+
+    # Same library still hits the cache rather than re-reading mid-window.
+    with _patch(stickers_module, "_STICKER_DIR", library_b):
+        _write_library(library_b, [{"file": "late.png", "tags": ["丙"]}])
+        (library_b / "late.png").write_bytes(b"png-l")
+        cached = {entry.path.name for entry in stickers_module._load_manifest().entries}
+    assert cached == {"b.png"}
+
+    reset_runtime_state()
+    with _patch(stickers_module, "_STICKER_DIR", library_b):
+        refreshed = {entry.path.name for entry in stickers_module._load_manifest().entries}
+    assert refreshed == {"late.png"}
+
+
 def test_stickers_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("TAFFY_STICKERS_ENABLED", raising=False)
     assert stickers_enabled() is False

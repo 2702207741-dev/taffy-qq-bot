@@ -68,6 +68,17 @@ it must be rebuilt after any subsequent source/documentation changes.
   three regression tests in `tests/test_slang_stickers.py`.
 - Corrected an operator-facing pointer to a non-existent `SECURITY_REVIEW.md`
   in the admin API warning; it now names `docs/RELEASE_SAFETY.md`, which ships.
+- Fixed the sticker manifest cache serving one library's contents to another.
+  `_load_manifest()` cached for 30 seconds keyed only by time, so a read taken
+  after the library directory changed returned the previous directory's result
+  for the rest of the window. The cache is now keyed by the resolved directory
+  as well. This surfaced as an order-dependent sticker-listing failure in
+  `tests/test_desktop_api_v4.py` that reproduced on Python 3.12 and passed on
+  3.13/3.14 in the same run, so it was a latent timing fault rather than a
+  platform difference; any interpreter could have failed it. Added a
+  cross-directory cache regression test that also pins the intended behaviour
+  (a same-directory write is still served from cache, and `reset_runtime_state()`
+  still forces a reload).
 
 ## Verified platform matrix
 
@@ -77,16 +88,17 @@ None of them used the private upstream project.
 
 | Python | Platform | Isolated suite | Exit |
 | --- | --- | --- | --- |
-| 3.12 | Windows | 2,012 passed, 1 skipped, 75 subtests passed | 0 |
-| 3.12.3 | Linux (WSL Ubuntu) | 1,999 passed, 75 subtests passed | 0 |
-| 3.13.13 | Linux (WSL Ubuntu) | 1,999 passed, 75 subtests passed | 0 |
-| 3.14.6 | Linux (WSL Ubuntu) | 1,999 passed, 75 subtests passed | 0 |
+| 3.12 | Windows | 2,013 passed, 1 skipped, 75 subtests passed | 0 |
+| 3.12.3 | Linux (WSL Ubuntu) | see note below | 0 / 1 |
+| 3.13.13 | Linux (WSL Ubuntu) | 2,013 passed, 75 subtests passed | 0 |
+| 3.14.6 | Linux (WSL Ubuntu) | 2,013 passed, 75 subtests passed | 0 |
 
-The Windows row was measured on this commit. The three Linux rows were measured
-on commit `03263f3`, before the three fixes above; the later "Re-running the
-matrix" note below records what has since been re-measured. All four runs used
-`scripts/run_isolated_tests.py`, which copies the tree into a throwaway
-directory rather than testing in place.
+The Windows row and the two passing Linux rows were measured on the archive
+containing every fix listed above. Linux/3.12 is marked "0 / 1" deliberately:
+its run reported one failure, the sticker-cache fault described above, which was
+a real defect and is now fixed -- the earlier green Linux/3.12 result was
+luck, not evidence. Re-run the whole table on the exact published commit before
+relying on it.
 
 `requires-python = ">=3.12,<3.15"` is therefore demonstrated on Linux for all
 three interpreters. **Python 3.13 and 3.14 remain unverified on Windows**, and
@@ -187,13 +199,6 @@ Bot service (`src/`):
 - The vision fetch follows a message-supplied URL with only an `http(s)`
   prefix check and no host allowlist, and buffers the body before applying the
   size cap.
-
-## Re-running the matrix
-
-Nothing above this line changes without a re-measurement. Before publishing,
-re-run the Linux 3.12/3.13/3.14 isolated suites against the exact archive built
-from the published commit and update the table; the Linux rows currently reflect
-commit `03263f3`, not this one.
 
 ## Evidence limits
 

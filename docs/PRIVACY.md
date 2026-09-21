@@ -19,6 +19,7 @@ Do not send production `.env` files, full database files, raw private-chat logs,
 ## Design safeguards
 
 - Private and group conversation scopes are kept distinct; user-scoped records are not meant to cross those boundaries.
+- Storage does not always mirror that boundary, so read scoping is the enforcement point. Taught expressions (`persona_slang`) keep no user column in their key: every private-chat entry lands in one shared bucket identified by `scope_group_id = 0`, with `created_by` as the only per-user discriminator. The user-facing listing, the index used by the confirm/delete/enable commands, and prompt assembly filter that bucket by speaker; the operator console can still deliberately read the whole bucket. Anyone with direct database access therefore sees all users' private entries interleaved, and a future query that forgets the discriminator reintroduces the leak — treat the database file itself as private-chat material.
 - Long-term memory is based on explicit user commands rather than automatic extraction from ordinary chat.
 - The service can use anonymised, aggregated operational telemetry; its documented intent is to avoid saving QQ message content, user identifiers, Steam IDs, item names, and bot replies in that telemetry store.
 - Logs should be access-controlled and rotated by the operator. Never publish logs without a careful data review.

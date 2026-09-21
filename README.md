@@ -4,6 +4,8 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12--3.14-blue.svg)](pyproject.toml)
 
+The CI badge and the clone URL below name the intended public repository; they only resolve once that repository exists. Until then, install from the release source archive and unpack it into `taffy-qq-bot`.
+
 Taffy is a self-hosted QQ community assistant for Counter-Strike 2 (CS2). It is built on NoneBot2 and OneBot V11, with a local SQLite state store, explicit privacy boundaries, market-data guardrails, and an optional desktop operations console.
 
 塔菲是一个可自行部署的 CS2 QQ 社群助手。它以 NoneBot2 / OneBot V11 为基础，提供聊天、行情查询、价格预警、库存监控、新闻、社群工具与可选的桌面运维工作台。运行数据保存在你控制的本地 SQLite 数据库中。

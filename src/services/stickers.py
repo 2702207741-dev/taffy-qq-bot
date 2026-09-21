@@ -100,16 +100,24 @@ class _Manifest:
     entries: tuple[_StickerEntry, ...]
 
 
-_manifest_cache: tuple[float, _Manifest] | None = (0.0, _Manifest(()))
+_manifest_cache: tuple[float, Path, _Manifest] | None = None
 
 
 def _load_manifest() -> _Manifest:
-    """Read and validate the sticker manifest with a short cache."""
+    """Read and validate the sticker manifest with a short cache.
+
+    The cache is keyed by the resolved library directory. Timing it only would
+    let a read taken from one directory serve another directory's result for
+    ``_MANIFEST_CACHE_SECONDS``, which both breaks tests that relocate the
+    library and hides a real refresh whenever the configured directory changes.
+    """
 
     global _manifest_cache
     now = time.monotonic()
-    if _manifest_cache is not None and now - _manifest_cache[0] < _MANIFEST_CACHE_SECONDS:
-        return _manifest_cache[1]
+    directory = _STICKER_DIR.resolve()
+    cached = _manifest_cache
+    if cached is not None and cached[1] == directory and now - cached[0] < _MANIFEST_CACHE_SECONDS:
+        return cached[2]
     manifest_path = _STICKER_DIR / _MANIFEST_NAME
     entries: list[_StickerEntry] = []
     try:
@@ -152,7 +160,7 @@ def _load_manifest() -> _Manifest:
             )
             entries.append(_StickerEntry(path, clean_tags, description, vibe))
     manifest = _Manifest(tuple(entries))
-    _manifest_cache = (now, manifest)
+    _manifest_cache = (now, directory, manifest)
     return manifest
 
 
@@ -489,7 +497,7 @@ def _append_manifest_entry(entry: dict[str, object]) -> bool:
     except (OSError, ValueError) as exc:
         logger.warning("Manifest append failed error=%s", type(exc).__name__)
         return False
-    _manifest_cache = (0.0, _Manifest(()))
+    _manifest_cache = None
     return True
 
 
@@ -540,7 +548,7 @@ def apply_description(path: Path, description: str, tags: list[str]) -> bool:
     except (OSError, ValueError) as exc:
         logger.warning("Manifest description update failed error=%s", type(exc).__name__)
         return False
-    _manifest_cache = (0.0, _Manifest(()))
+    _manifest_cache = None
     return True
 
 
@@ -550,7 +558,7 @@ def reset_runtime_state() -> None:
     global _manifest_cache
     _cooldown_state.clear()
     _daily_state.clear()
-    _manifest_cache = (0.0, _Manifest(()))
+    _manifest_cache = None
 
 
 __all__ = [
