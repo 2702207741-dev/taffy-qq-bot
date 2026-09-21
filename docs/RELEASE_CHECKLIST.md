@@ -33,3 +33,37 @@ Run this checklist before creating a GitHub release.
 - private message content, real account identifiers, inventory snapshots, backups, or unredacted logs;
 - material copied from another project without a compatible license and attribution;
 - claims about users, stars, downloads, security audits, partnerships, or production reliability that cannot be verified.
+
+## Status for the released source line
+
+This records what was actually executed, so a later maintainer does not re-run
+green checks. It describes the source line from commit `fc1cf6d` onward: the
+commits after it change documentation only, so every result below holds for the
+archive built from the shipped commit. It is a statement about verified
+behaviour, not a certification.
+
+Already satisfied here:
+
+- Repository safety: `scripts/check_secrets.py` exits 0; `scripts/verify_release_zip.py`
+  exits 0 over the 414 committed files of the archive built from this line; the
+  staged tree contains no `.env` (only `.env.example`), no database, log, key or
+  image binaries, no `data/`, `dist/`, `node_modules/` or `__pycache__`, and no
+  personal absolute paths -- confirmed with a positive control that the same
+  searches do match a string that is present.
+- Quality: main lint, format, mypy (150 files) and lock checks exit 0; the
+  isolated suite passes on Windows 3.12 (2,020 passed, 1 skipped) and on Linux
+  3.12.3 / 3.13.13 / 3.14.6 (2,021 each); desktop lint, format, mypy and its 78
+  tests exit 0; both locked dependency sets audit with no known vulnerabilities.
+  `docs/HARDENING_STATUS.md` carries the per-interpreter table and its limits.
+
+Still requires an action outside this repository:
+
+- A GitHub Actions run **on the pushed commit**; local exit codes are not that run.
+- Creating the public repository and pushing (needs the maintainer's account).
+- Enabling Discussions, private vulnerability reporting and `main` protection,
+  then writing release notes from the verified facts above.
+- Live acceptance the test suite cannot reach: a real OneBot endpoint, a real
+  paid vision/embedding key exercising the daily budgets under traffic, and the
+  desktop WebView2 launch on a real Windows desktop.
+- Python 3.13 and 3.14 on Windows remain unverified, and the items in
+  "Open findings deliberately left unfixed" need a product or deployment decision.
