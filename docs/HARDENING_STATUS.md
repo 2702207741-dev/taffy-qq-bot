@@ -122,16 +122,16 @@ None of them used the private upstream project.
 
 | Python | Platform | Isolated suite | Exit |
 | --- | --- | --- | --- |
-| 3.12 | Windows | 2,020 passed, 1 skipped, 75 subtests passed | 0 |
-| 3.12.3 | Linux (WSL Ubuntu) | 2,021 passed, 75 subtests passed | 0 |
-| 3.13.13 | Linux (WSL Ubuntu) | 2,021 passed, 75 subtests passed | 0 |
-| 3.14.6 | Linux (WSL Ubuntu) | 2,021 passed, 75 subtests passed | 0 |
+| 3.12 | Windows | 2,034 passed, 1 skipped, 75 subtests passed | 0 |
+| 3.12.3 | Linux (WSL Ubuntu) | 2,035 passed, 75 subtests passed | 0 |
+| 3.13.13 | Linux (WSL Ubuntu) | 2,035 passed, 75 subtests passed | 0 |
+| 3.14.6 | Linux (WSL Ubuntu) | 2,035 passed, 75 subtests passed | 0 |
 
-Both platforms collect 2,021 items: the Windows run records one of them as
-skipped, each Linux run collects and passes all 2,021. The three Linux rows and
+Both platforms collect 2,035 items: the Windows run records one of them as
+skipped, each Linux run collects and passes all 2,035. The three Linux rows and
 the Windows row used the archive
-`84705363772b9906949d753ab5a9ffb5e67acebf032609699526ac7b82964f5e`
-(commit `fc1cf6d`), and every count above was read from that run's isolated
+`9132aee529df61c52770c83c4193c624bb8d8707f2f02989ff3e6a34d5c17ba3`
+(commit `dab559c`), and every count above was read from that run's isolated
 `pytest.log` rather than inferred. This page was then rebuilt into the shipped
 archive with documentation-only changes, so the shipped hash differs while the
 tested source under `src/`, `scripts/`, `tests/` and `bot.py` does not.
@@ -140,7 +140,7 @@ All four runs used `scripts/run_isolated_tests.py`, which copies the tree into a
 throwaway directory instead of testing in place; the three Linux runs unpacked
 the release archive itself rather than a working checkout. The Linux 3.12
 interpreter also cleared Ruff (`All checks passed!`), `ruff format --check`
-(306 files) and mypy (150 source files). `scripts/check_secrets.py` returned
+(308 files) and mypy (151 source files). `scripts/check_secrets.py` returned
 exit 2 there with `Secret scan could not complete: git ls-files failed`, because
 an extracted archive has no Git metadata: the scanner refuses to report a pass on
 an incomplete file set, so that gate is only satisfied in a real checkout (Windows,

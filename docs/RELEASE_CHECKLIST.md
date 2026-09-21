@@ -37,22 +37,21 @@ Run this checklist before creating a GitHub release.
 ## Status for the released source line
 
 This records what was actually executed, so a later maintainer does not re-run
-green checks. It describes the source line from commit `fc1cf6d` onward: the
-commits after it change documentation only, so every result below holds for the
-archive built from the shipped commit. It is a statement about verified
-behaviour, not a certification.
+green checks. The source line from commit `dab559c` onward changes only
+documentation, so every result below holds for the archive built from the shipped
+commit. It states verified behaviour, not a certification.
 
 Already satisfied here:
 
 - Repository safety: `scripts/check_secrets.py` exits 0; `scripts/verify_release_zip.py`
-  exits 0 over the 414 committed files of the archive built from this line; the
+  exits 0 over the 416 committed files of the archive built from this line; the
   staged tree contains no `.env` (only `.env.example`), no database, log, key or
   image binaries, no `data/`, `dist/`, `node_modules/` or `__pycache__`, and no
   personal absolute paths -- confirmed with a positive control that the same
   searches do match a string that is present.
-- Quality: main lint, format, mypy (150 files) and lock checks exit 0; the
-  isolated suite passes on Windows 3.12 (2,020 passed, 1 skipped) and on Linux
-  3.12.3 / 3.13.13 / 3.14.6 (2,021 each); desktop lint, format, mypy and its 78
+- Quality: main lint, format, mypy (151 files) and lock checks exit 0; the
+  isolated suite passes on Windows 3.12 (2,034 passed, 1 skipped) and on Linux
+  3.12.3 / 3.13.13 / 3.14.6 (2,035 each); desktop lint, format, mypy and its 78
   tests exit 0; both locked dependency sets audit with no known vulnerabilities.
   `docs/HARDENING_STATUS.md` carries the per-interpreter table and its limits.
 
