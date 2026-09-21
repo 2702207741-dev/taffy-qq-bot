@@ -100,6 +100,19 @@ it must be rebuilt after any subsequent source/documentation changes.
   served against a 4 KiB cap reads 5 KiB and saves nothing. Both new behaviour
   tests were run against the previous code and failed there (exit 1), while the
   accepted-image test passed on both, so they pin the fix rather than restating it.
+- The listener now validates `Host`. `.env.example` ships the OneBot credentials
+  blank, in which case the adapter verifies no signature at all, and uvicorn
+  never checked `Host`, so a page in the operator's own browser could be DNS-rebound
+  onto `127.0.0.1:8080` and post an event whose `user_id` decides superuser
+  status. `src/core/ingress_guard.py` rejects a hostname that is not a loopback
+  name, not a literal IP address (a browser cannot rebind an IP literal) and not
+  listed in the new `TAFFY_ALLOWED_HOSTS`, over HTTP and websocket alike; `*`
+  opts out and `TAFFY_INGRESS_TLS_TERMINATED`/loopback downgrade are unchanged.
+  Fourteen tests cover the decision table, an unsigned local POST that must still
+  reach the handler, a rebound host that must return 400 without reaching it, and
+  a websocket closed with 1008. One pre-existing panel test had to stop sending
+  the invented `Host: test`, which the guard now refuses by design; its asserted
+  status codes and headers were left intact.
 
 ## Verified platform matrix
 
@@ -229,12 +242,12 @@ Desktop studio (`desktop/`):
 
 Bot service (`src/`):
 
-- OneBot ingress is only authenticated when `ONEBOT_V11_SECRET` /
-  `ONEBOT_V11_ACCESS_TOKEN` are set, and `.env.example` ships both blank. All
-  QQ-side privilege derives from the event's `user_id`, and uvicorn does not
-  validate `Host`, so a local process -- or a browser page after DNS
-  rebinding -- could forge a superuser event on a loopback bind. Deciding this
-  needs an operator's real topology.
+- With `ONEBOT_V11_SECRET` / `ONEBOT_V11_ACCESS_TOKEN` left blank (as
+  `.env.example` ships them) the adapter checks no signature, so any *local*
+  process can still post a forged event whose `user_id` decides privilege. The
+  `Host` guard now blocks the browser/DNS-rebinding route to that same port, but
+  a local one remains: requiring a credential by default would break a plain
+  same-machine gateway, so it stays an operator choice.
 - `POST /api/desktop/chat` keys its 12-per-minute limiter on a
   caller-supplied `session` string, so rotating that value raises the effective
   ceiling to the global 30-per-minute LLM limiter. An existing test asserts the

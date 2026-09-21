@@ -484,7 +484,11 @@ class AdminPanelSecurityHeaderTests(unittest.IsolatedAsyncioTestCase):
 
     async def _get(self, path: str):
         transport = httpx.ASGITransport(app=self.app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        # This is the real plugin app, so it carries the Host guard; an
+        # invented hostname such as "test" is now refused like any other.
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://127.0.0.1:8080"
+        ) as client:
             return await client.get(path)
 
     async def test_panel_page_carries_security_headers(self) -> None:

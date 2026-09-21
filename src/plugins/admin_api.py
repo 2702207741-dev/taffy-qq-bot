@@ -24,6 +24,11 @@ from nonebot import get_app, get_driver
 
 from src.core.config import get_admin_api_token
 from src.core.health import collect_health_snapshot, public_readiness
+from src.core.ingress_guard import (
+    HostGuardMiddleware,
+    describe_guard,
+    extra_hosts_from_env,
+)
 from src.core.rate_limit import SlidingWindowLimiter
 from src.services import panel_stats
 from src.services.authority import FEATURES
@@ -1419,6 +1424,12 @@ async def admin_events(
 app = get_app()
 app.include_router(health_router)
 app.include_router(router)
+
+#: ``Host`` must be checked before the adapter's unsigned local webhook can be
+#: reached, so the guard wraps the whole ASGI app rather than these routers.
+_allowed_host_names = extra_hosts_from_env()
+app.add_middleware(HostGuardMiddleware, extra_hosts=_allowed_host_names)
+_log.info("Ingress Host guard active: %s", describe_guard(_allowed_host_names))
 
 _PANEL_DIRECTORY = Path(__file__).resolve().parent / "admin_panel"
 _PANEL_INDEX = _PANEL_DIRECTORY / "index.html"
