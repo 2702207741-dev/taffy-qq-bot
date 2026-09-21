@@ -22,6 +22,27 @@ The template is not submission-ready: replace brackets with accurate facts and r
 
 Do not substitute aspirations, local development activity, or unverified user counts for public evidence. A new repository can still be submitted, but its selection odds are inherently harder to demonstrate than those of an established, actively used project.
 
+### Engineering evidence you may quote as-is
+
+These are reproducible properties of this repository, not adoption metrics. State them only for the commit you publish, and link the CI run that shows them. They do not substitute for usage evidence, and "no known advisories" is not "no vulnerabilities":
+
+- Supported interpreters `>=3.12,<3.15`; the isolated suite passes on Linux for 3.12.3, 3.13.13 and 3.14.6, and on Windows for 3.12 (2,012 tests, 1 skipped, 75 subtests).
+- Ruff lint, Ruff format check, and mypy are clean for the main package and the desktop studio; both dependency sets audit clean against OSV at the locked versions.
+- GitHub Actions are pinned to commit SHAs rather than mutable tags; secret scanning covers the working tree, reachable history, and the built release archive in CI.
+- A release-archive verifier checks committed-file identity, missing/extra/duplicate members, unsafe paths, symlinks, Windows path aliases and credential patterns.
+
+Anything the reader cannot verify from the public repository or a CI run must stay in brackets or be left out.
+
+### What only you can supply
+
+| Field | Evidence you must provide |
+| --- | --- |
+| Repository URL | The published public repository, matching the README badge and clone URL. |
+| Maintainer identity | The GitHub account that visibly owns or holds write access, plus your ChatGPT-account email. |
+| Adoption | Real stars, forks, issues, PRs, releases, or downstream users — none of which exist yet for a new repository. |
+| Organisation ID | The actual OpenAI platform organisation ID from your dashboard. |
+| Impact claim | A concrete reason the project matters to its community, phrased from experience rather than ambition. |
+
 ### API-credit use (maximum 500 characters)
 
 > 我会把 API 额度仅用于本仓库的维护工作流：对已脱敏的 issue 分类；依据失败 CI 生成可审查的复现与修复建议；汇总 PR 的风险和测试缺口；从已合并 diff 起草发布说明。最终审查、合并和发布始终由人类维护者完成。不会上传 `.env`、生产数据库、聊天原文、用户身份信息，也不会扫描无权管理的仓库或系统。
